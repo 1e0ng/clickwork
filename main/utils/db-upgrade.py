@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import optparse
-import simplejson
+import json
 import subprocess
 import sys
 import os
@@ -38,7 +38,7 @@ if __name__ == "__main__":
 
         (options, args) = parser.parse_args()
 
-        upgrade_path = simplejson.load(open(os.path.join(BASE_PATH,
+        upgrade_path = json.load(open(os.path.join(BASE_PATH,
 				"main/utils/upgrades-manifest.json")))["upgrade_path"]
 
         db_version = get_version()

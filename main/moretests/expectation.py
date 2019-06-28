@@ -2,7 +2,7 @@
 from django.core.urlresolvers import reverse, resolve
 from django.test import TestCase
 from django.test.client import Client
-import simplejson as json
+import json
 import sys
 from urlparse import urlparse
 from main.wrapper import Encoder

@@ -5,15 +5,16 @@ from django.core.context_processors import csrf
 from django.core.urlresolvers import reverse
 import django.db.models
 from django.db.models.query import QuerySet
-from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, HttpResponseServerError, HttpResponseNotFound, HttpResponseForbidden, HttpResponseNotAllowed, QueryDict, MultiValueDict, Http404
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, HttpResponseServerError, HttpResponseNotFound, HttpResponseForbidden, HttpResponseNotAllowed, QueryDict, Http404
 from django.template import RequestContext
 from django.template.loader import get_template
+from django.utils.datastructures import MultiValueDict
 
 from base64 import b64encode
 from functools import wraps
 from urlparse import urlsplit, urlunsplit
 from datetime import datetime, date
-import simplejson as json
+import json
 
 import sys
 
