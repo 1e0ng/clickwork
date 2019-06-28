@@ -95,14 +95,14 @@ class SimpleResponse(Response):
     class Meta:
         app_label = "main"
     answer = models.CharField(max_length=255)
-    comment = models.TextField()
+    comment = models.TextField(blank=True, null=True)
 
 class SimpleResult(Result):
     """Merged result for simple responses; answer + comment"""
     class Meta:
         app_label = "main"
     answer = models.CharField(max_length=255)
-    comment = models.TextField()
+    comment = models.TextField(blank=True, null=True)
 
 models.loading.register_models("main", 
     SimpleTask,
