@@ -1,5 +1,5 @@
 *~
 *.pyc
 uploads/
-/local_settings.py
+local_settings.py
 .idea
