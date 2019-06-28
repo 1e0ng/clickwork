@@ -1,22 +1,28 @@
-#!/usr/bin/python
+"""
+WSGI config for clickwork project.
 
-import sys
+This module contains the WSGI application used by Django's development server
+and any production WSGI deployments. It should expose a module-level variable
+named ``application``. Django's ``runserver`` and ``runfcgi`` commands discover
+this application via the ``WSGI_APPLICATION`` setting.
+
+Usually you will have the standard Django WSGI application here, but it also
+might make sense to replace the whole Django WSGI application with a custom one
+that later delegates to the Django one. For example, you could introduce WSGI
+middleware here, or combine a Django application with an application of another
+framework.
+
+"""
 import os
 
-sys.stdout = sys.stderr
-path = os.path.dirname(os.path.abspath(__file__))
-#ugly hack until packaging is more sane (v2.0)
-sys.path.insert(0, '/usr/local/lib/python2.6/dist-packages')
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(os.path.join(path, ".."))
-os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "clickwork.settings")
 
-import django.core.handlers.wsgi
+# This application object is used by any WSGI server configured to use this
+# file. This includes Django's development server, if the WSGI_APPLICATION
+# setting points here.
+from django.core.wsgi import get_wsgi_application
+application = get_wsgi_application()
 
-application = django.core.handlers.wsgi.WSGIHandler()
-
-if __name__ == '__main__':
-    from wsgiref.simple_server import make_server
-    httpd = make_server('0.0.0.0', 9000, application)
-    print "Listening on port 9000...."
-    httpd.serve_forever()
+# Apply WSGI middleware here.
+# from helloworld.wsgi import HelloWorldApplication
+# application = HelloWorldApplication(application)
