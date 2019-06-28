@@ -6,7 +6,7 @@ admin.autodiscover()
 
 urlpatterns = patterns('',
     (r'^favicon.ico', 'django.views.static.serve',
-     {'document_root': 'static', 'path': 'favicon.ico'}),
+     {'document_root': 'clickwork/static', 'path': 'favicon.ico'}),
     (r'^user_management/', include('user_management.urls')),
     (r'^', include('main.urls')),
 
