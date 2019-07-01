@@ -3,7 +3,6 @@ from django.conf.urls import *
 from django.contrib.auth import views
 
 urlpatterns = patterns('main.views',
-    # Example:
     (r'^project/(?P<project_id>\d+)/api/(?P<url>.*)$', 'project.project_api'),
     (r'^task/(?P<task_id>\d+)/$', 'task.task_view'),
     (r'^review/(?P<review_id>\d+)/$', 'task.task_review'),
@@ -32,9 +31,6 @@ urlpatterns = patterns('main.views',
     (r'^track/$', 'base.track_page_visit')
 )
 
-## If the "main.types.bar_baz module" has a urlpatterns variable
-## defining a "foo" URL pattern, this will be translated into
-## "/project-type/bar-baz/foo".
 for task_type in settings.TASK_TYPES:
     mod = __import__("main.types.%s" % task_type, None, None, ["urlpatterns"])
     if hasattr(mod, "urlpatterns"):

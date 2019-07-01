@@ -98,7 +98,7 @@ def about(guts):
     template = get_template("about.html")
     return TemplateResponse(template, {})
 
-@transaction.commit_on_success
+@transaction.atomic
 @login_required
 @get
 def next_task(guts):
