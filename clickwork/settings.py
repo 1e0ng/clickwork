@@ -8,7 +8,7 @@ SECRET_KEY = '7wwt(!57n(mx5)@v61^(7#a66hhtq_*51sqn+6l78-t*f=d)45'
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['0.0.0.0']
 
 # Application definition
 
