@@ -5,6 +5,7 @@ from django.contrib.auth.models import Group, User
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.template.loader import get_template
+from django.utils import timezone
 import datetime
 import inspect
 import sys
@@ -385,7 +386,7 @@ class Response(models.Model):
 
     def clean(self):
         super(Response, self).clean()
-        if self.start_time > (self.end_time or datetime.datetime.now()):
+        if self.start_time > (self.end_time or timezone.now()):
             raise ValidationError("Work on Response cannot end before it begins.")
 
     def __unicode__(self):
