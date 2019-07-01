@@ -411,7 +411,7 @@ class Result(models.Model):
 
     def clean(self):
         super(Result, self).clean()
-        if self.start_time > (self.end_time or datetime.datetime.now()):
+        if self.start_time > (self.end_time or timezone.now()):
             raise ValidationError("Work on Result cannot end before it begins.")
         if not self.task.completed:
             raise ValidationError("A task cannot be merged before it is annotated.")
@@ -524,7 +524,7 @@ class PageTrack(models.Model):
     view_kwargs = models.CharField(max_length=200,
                                    help_text="The keyword arguments passed to the function.")
     focus_time = models.DateTimeField(help_text="The time the user got focus on the page.")
-    blur_time = models.DateTimeField(default=lambda: datetime.datetime.now(),
+    blur_time = models.DateTimeField(default=lambda: timezone.now(),
                                      help_text="The time the user lost focus to the page.")
 
 class Announcement(models.Model):

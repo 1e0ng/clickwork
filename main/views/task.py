@@ -2,6 +2,7 @@ from django.shortcuts import get_object_or_404
 from main.models import Project, Task, WorkInProgress, Response, Result, User, Review, AutoReview
 from main.types import type_list
 from django.contrib.auth.decorators import login_required
+from django.utils import timezone
 from main.helpers import get_project_type
 from main.wrapper import get, get_or_post, TemplateResponse, ViewResponse, ForbiddenResponse, DefaultResponse, ErrorResponse
 from django.template import Context, Template
@@ -57,7 +58,7 @@ def task_view(get, guts, task_id):
                         return ViewResponse(task_view, task_id)
                     else:
                         ## The user must have clicked the "I read this review" button.
-                        auto_review.end_time = datetime.datetime.now()
+                        auto_review.end_time = timezone.now()
                         auto_review.full_clean()
                         auto_review.save()
                         return ViewResponse(main.views.base.next_task)

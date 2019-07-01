@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.urlresolvers import resolve, reverse
+from django.utils import timezone
 from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template.loader import get_template
@@ -135,7 +136,7 @@ def next_task(guts):
         start_time__isnull=True, end_time__isnull=True).order_by("-task__project__priority")
     if new_auto_reviews.exists():
         auto_review = new_auto_reviews[0]
-        auto_review.start_time = datetime.datetime.now()
+        auto_review.start_time = timezone.now()
         auto_review.full_clean()
         auto_review.save()
         return ViewResponse(main.views.task.task_view,
@@ -145,7 +146,7 @@ def next_task(guts):
     wips = WorkInProgress.objects.filter(user=guts.user)
     if wips.count():
         wip = wips[0]
-        wip.start_time = datetime.datetime.now()
+        wip.start_time = timezone.now()
         wip.full_clean()
         wip.save()
     else:

@@ -6,6 +6,7 @@ import sys
 from main.models import Response, Result
 from main.wrapper import get, DefaultResponse, ErrorResponse, ForbiddenResponse, TemplateResponse
 from django import forms
+from django.utils import timezone
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.decorators import login_required
 from django.template.loader import get_template
@@ -140,7 +141,7 @@ class TimeBlockSpec(object):
         def __str__(self):
             return "%s %d of %d" % (self.spec.resolution, self.unit, self.year)
 
-    def __init__(self, resolution, periods, latest_block_contains=datetime.datetime.now()):
+    def __init__(self, resolution, periods, latest_block_contains=timezone.now()):
         self.resolution = resolution
         self.periods = periods
         self.latest_block = self.block_containing(latest_block_contains, False)

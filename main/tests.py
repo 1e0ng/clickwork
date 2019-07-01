@@ -23,6 +23,7 @@ u'Test Project'
 """
 from django.test.client import Client
 from django.test import TestCase
+from django.utils import timezone
 from django.contrib.auth.models import User, Group
 from django.conf import settings
 from main.models import Project, Review, Response
@@ -193,7 +194,7 @@ class GetNextTask(TestCase):
         ## get the next task
         self.task_expectation.check(self)
         ## tweak the database to put a response and a review in
-        response = Response(task=self.t, user=self.user, start_time=datetime.datetime.now())
+        response = Response(task=self.t, user=self.user, start_time=timezone.now())
         response.full_clean()
         response.save()
         review = Review(response=response, comment="I have reviewed this task.")
