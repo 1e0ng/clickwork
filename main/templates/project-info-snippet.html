@@ -14,13 +14,13 @@
   <dt>Annotator group{{ project.annotator_groups|length|pluralize }}</dt>
   <dd><ul class="hlist">
       {% for group in project.annotator_groups %}
-      <li><a href="{% url main.views.overview.one_group group.id %}">{{ group.name }}</a></li>
+      <li><a href="{% url 'main.views.overview.one_group' group.id %}">{{ group.name }}</a></li>
       {% endfor %}
   </ul></dd>
   <dt>Annotator{{ project.annotators|length|pluralize }}</dt>
   <dd><ul class="hlist">
       {% for username in project.annotators %}
-      <li><a href="{% url main.views.overview.one_user username %}">{{ username }}</a></li>
+      <li><a href="{% url 'main.views.overview.one_user' username %}">{{ username }}</a></li>
       {% endfor %}
   </ul></dd>
   {% else %}
@@ -30,13 +30,13 @@
   <dt>Merger group{{ project.merger_groups|length|pluralize }}</dt>
   <dd><ul class="hlist">
       {% for group in project.merger_groups %}
-      <li><a href="{% url main.views.overview.one_group group.id %}">{{ group.name }}</a></li>
+      <li><a href="{% url 'main.views.overview.one_group' group.id %}">{{ group.name }}</a></li>
       {% endfor %}
   </ul></dd>
   <dt>Merger{{ project.mergers|length|pluralize }}</dt>
   <dd><ul class="hlist">
       {% for username in project.mergers %}
-      <li><a href="{% url main.views.overview.one_user username %}">{{ username }}</a></li>
+      <li><a href="{% url 'main.views.overview.one_user' username %}">{{ username }}</a></li>
       {% endfor %}
   </ul></dd>
   {% else %}

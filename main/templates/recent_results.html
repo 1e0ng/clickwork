@@ -29,7 +29,7 @@
     <tr>
       {% if forloop.first %}
       <td rowspan="{{ span }}">
-	<a href="{% url main.views.task.task_view r.result.task.id %}">{{ r.result.task.id }}</a>
+	<a href="{% url 'main.views.task.task_view' r.result.task.id %}">{{ r.result.task.id }}</a>
       </td>
       <td rowspan="{{ span }}">{{ r.result_summary }}</td>
       {% endif %}
