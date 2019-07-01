@@ -20,7 +20,7 @@ DATABASES = {
     "default": {
         "NAME": "default_db",
         "ENGINE": "django.db.backends.postgresql_psycopg2"
-        }
+    }
 }
 
 # Hosts/domain names that are valid for this site; required if DEBUG is False
