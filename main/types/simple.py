@@ -1,5 +1,6 @@
 from main.models import Project, Task, Response, Result, ProjectType
 from django.db import models
+import django.db.models.loading
 
 import csv
 from cStringIO import StringIO
@@ -104,10 +105,12 @@ class SimpleResult(Result):
     answer = models.CharField(max_length=255)
     comment = models.TextField(blank=True, null=True)
 
-models.loading.register_models("main", 
+'''
+django.db.models.loading.register_models("main", 
     SimpleTask,
     SimpleResponse,
     SimpleResult)
+'''
 
 class Simple(ProjectType):
     """
