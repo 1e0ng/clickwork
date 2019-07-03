@@ -14,7 +14,7 @@ and/or merge.</p>
 
 <ul class="hlist">
   {% for group in groups %}
-  <li><a href="{% url 'main.views.overview.one_group' group.id %}">{{ group.name }}</a></li>
+  <li><a href="{% url 'main:view-group' group.id %}">{{ group.name }}</a></li>
   {% endfor %}
 </ul>
 {% else %}
@@ -30,27 +30,27 @@ tasks and merge approximately {{ resolvable_task_count }} tasks.</p>
 <h3>Tasks recently annotated</h3>
 <ul class="hlist">
   {% for id in recent_responses %}
-  <li><a href="{% url 'main.views.task.task_view' id %}">{{ id }}</a></li>
+  <li><a href="{% url 'main:view-task' id %}">{{ id }}</a></li>
   {% endfor %}
 </ul>
-You can compare your responses vs. the merger for recent tasks which have been merged: <a href="{% url 'main.views.user.recent_responses' name %}">Recently Merged By Someone Else</a>
+You can compare your responses vs. the merger for recent tasks which have been merged: <a href="{% url 'main:user-response-list' name %}">Recently Merged By Someone Else</a>
 {% endif %}
 
 {% if recent_results %}
 <h3>Tasks recently merged</h3>
 <ul class="hlist">
   {% for id in recent_results %}
-  <li><a href="{% url 'main.views.task.task_view' id %}">{{ id }}</a></li>
+  <li><a href="{% url 'main:view-task' id %}">{{ id }}</a></li>
   {% endfor %}
 </ul>
-You can compare your results vs. their annotators: <a href="{% url 'main.views.user.recent_results' name %}">Recently Merged By You</a>
+You can compare your results vs. their annotators: <a href="{% url 'main:user-result-list' name %}">Recently Merged By You</a>
 {% endif %}
 
 {% if recent_reviews %}
 <h3>Tasks recently given back for review</h3>
 <ul class="hlist">
   {% for id in recent_reviews %}
-  <li><a href="{% url 'main.views.task.task_review' id %}">{{ id }}</a></li>
+  <li><a href="{% url 'main:view-review' id %}">{{ id }}</a></li>
   {% endfor %}
 </ul>
 {% endif %}

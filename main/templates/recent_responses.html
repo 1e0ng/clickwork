@@ -41,7 +41,7 @@
 <tr class="match-{{response.match}}">
   <td>
   {% if user.is_superuser %}
-  <a href="{% url 'main.views.task.task_view' response.response.task.id %}">{{ response.response.task.id }}</a>
+  <a href="{% url 'main:view-task' response.response.task.id %}">{{ response.response.task.id }}</a>
   {% else %}
   {{ response.response.task.id }}
   {% endif %}
@@ -54,7 +54,7 @@
   <td>{{ response.project_type }}</td>
   <td>{{response.response.end_time|date:"Y-m-d"}}<br /><small>({{response.response.end_time|timesince}} ago)</small></td>
   <td>{{response.response.task.result.end_time|date:"Y-m-d"}}<br /><small>({{response.response.task.result.end_time|timesince}} ago)</small></td>
-  <td><a href="{% url 'main.views.task.task_adhoc_review' %}?response={{response.response.id}}">View</a></td>
+  <td><a href="{% url 'main:review' %}?response={{response.response.id}}">View</a></td>
 </tr>  
 {% endfor %}
 </table>

@@ -126,7 +126,7 @@ def project_upload(get, guts, project):
             ## NOTE: if subclasses have customized the delete() method,
             ## this bulk-delete will not call it.
             Task.objects.filter(project=project).delete()
-            return ViewResponse(one_project, project.id)
+            return ViewResponse('main:view-project', project.id)
         else:
             return ErrorResponse("Bad form", "Action parameter %s not understood" % action)
 

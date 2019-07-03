@@ -115,7 +115,7 @@ class Project(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return ("main.views.overview.one_project", [str(self.id)])
+        return ("main:view-project", [str(self.id)])
 
     def as_dict(self):
         return {"id": self.id,
@@ -236,7 +236,7 @@ class Task(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return("main.views.task.task_view", (), {"task_id": str(self.id)})
+        return("main:view-task", (), {"task_id": str(self.id)})
 
     @property
     def merge_in_progress(self):

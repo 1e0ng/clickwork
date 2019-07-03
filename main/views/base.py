@@ -58,13 +58,14 @@ def visitable(user):
     """Gather information about which pages this user can visit by
     filtering the PAGES variable."""
     guts = RequestGuts(user=user)
-    def reverse_if_visitable(view_function):
+    def reverse_if_visitable(view_function_name):
         try:
-        	seed = view_function.dispatcher["GET"](guts)
-        	if isinstance(seed, ForbiddenResponse):
-        	    return None
-        	else:
-        	    return reverse(view_function)
+            f = resolve(reverse(view_function_name)).func
+            seed = f.dispatcher["GET"](guts)
+            if isinstance(seed, ForbiddenResponse):
+                return None
+            else:
+                return reverse(view_function_name)
         except Exception as E:
             return None # If a view throws an exception because it's not configured, don't throw errors on the homepage
     visitable_pages = [{"category": category,
@@ -76,7 +77,7 @@ def visitable(user):
     ## since (a) this should always be accessible, and (b) visiting the page will
     ## cause a WIP to be assigned to the user as a side effect.
     visitable_pages.insert(0, {"category": "Tasks",
-                               "url": reverse(next_task),
+                               "url": reverse('main:next-task'),
                                "description": "Take next task"})
     ## hack to include the admin site
     if user.is_staff:
@@ -121,13 +122,13 @@ def next_task(guts):
     """
     review = Review.objects.filter(response__user=guts.user, complete=False)
     if review.count():
-        return ViewResponse(main.views.task.next_review)
+        return ViewResponse('main:next-review')
 
     auto_review_pending = AutoReview.objects.filter(user=guts.user,
                                                     start_time__isnull=False,
                                                     end_time__isnull=True)
     if auto_review_pending.exists():
-        return ViewResponse(main.views.task.task_view,
+        return ViewResponse('main:view-task',
                             auto_review_pending[0].task.id)
     new_auto_reviews = AutoReview.objects.filter(
         user=guts.user, task__project__priority__gte=0,
@@ -137,7 +138,7 @@ def next_task(guts):
         auto_review.start_time = timezone.now()
         auto_review.full_clean()
         auto_review.save()
-        return ViewResponse(main.views.task.task_view,
+        return ViewResponse('main:view-task',
                             auto_review.task.id)
 
     wip = None
@@ -154,9 +155,9 @@ def next_task(guts):
             wip.full_clean()
             wip.save()
     if wip:
-        return ViewResponse(main.views.task.task_view, wip.task.id)
+        return ViewResponse('main:view-task', wip.task.id)
     else:
-        return ViewResponse(home)
+        return ViewResponse('main:home')
 
 ## TODO: Needs testing.
 ## TODO: This code assumes that each user may only have one WIP.
@@ -179,7 +180,7 @@ def abandon_wip(get, guts):
         if wips.count():
             wip = wips[0]
             wip.delete()
-            return ViewResponse(home)
+            return ViewResponse('main:home')
         else: 
             template = get_template("abandon_wip.html")
             return TemplateResponse(template, {"wips": wips})
@@ -236,13 +237,12 @@ def track_page_visit(get, guts):
 
 ### These are the pages that might be shown in the sitemap.
 ### They must all be accessible to at least some users without parameters or URL variations.
-PAGES = []
-'''Tasks", abandon_wip, "Abandon the work in progress"),
-         ("Accounts", user_management.views.change_password, "Change your password"),
-         ("Accounts", main.views.timesheets.timesheet, "Generate (estimated) timesheets"),
-         ("Overviews", main.views.task.wip_review, "See works in progress"),
-         ("Overviews", main.views.overview.all_projects_brief, "See projects"),
-         ("Overviews", main.views.overview.all_groups, "See groups"),
-         ("Overviews", main.views.overview.all_users, "See users"),
-         )
-         '''
+PAGES = [
+    ("Tasks", 'main:abandon', "Abandon the work in progress"),
+    ("Accounts", 'user_management:change-password', "Change your password"),
+    ("Accounts", 'main:timesheet', "Generate (estimated) timesheets"),
+    ("Overviews", 'main:wip-list', "See works in progress"),
+    ("Overviews", 'main:project-list', "See projects"),
+    ("Overviews", 'main:group-list', "See groups"),
+    ("Overviews", 'main:user-list', "See users"),
+]

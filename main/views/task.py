@@ -57,13 +57,13 @@ def task_view(get, guts, task_id):
                         ## do not have a limit on how many responses they can have.)
                         ##
                         ## And then GET this page again, so the user can see the review.
-                        return ViewResponse(task_view, task_id)
+                        return ViewResponse('main:view-task', task_id)
                     else:
                         ## The user must have clicked the "I read this review" button.
                         auto_review.end_time = timezone.now()
                         auto_review.full_clean()
                         auto_review.save()
-                        return ViewResponse(main.views.base.next_task)
+                        return ViewResponse('main:next-task')
             except AutoReview.DoesNotExist:
                 ## fall through to the case below, since an admin is allowed to
                 ## look at someone else's auto-review
@@ -97,9 +97,9 @@ def task_view(get, guts, task_id):
                 task.save()
             wip.delete()
             if 'stop_working' in guts.parameters:
-                return ViewResponse(main.views.base.home)
+                return ViewResponse('main:home')
             else:
-                return ViewResponse(main.views.base.next_task)
+                return ViewResponse('main:next-task')
         except MultiValueDictKeyError:
             ## translate the MultiValueDict into a list of (key, list) pairs
             params = guts.parameters.lists()
@@ -120,8 +120,8 @@ def next_review(guts):
     review = Review.objects.filter(response__user=guts.user, complete=False)
     if review.count():
         review = review[0]
-        return ViewResponse(task_review, review.id)
-    return ViewResponse(main.views.base.home)
+        return ViewResponse('main:view-task', review.id)
+    return ViewResponse('main:home')
 
 @login_required
 @get_or_post
@@ -148,7 +148,7 @@ def task_adhoc_review(get, guts):
         template_data = task.template_data(review=review)
         return TemplateResponse(template, template_data)
     else:
-        return ViewResponse(next_review)
+        return ViewResponse('main:next-review')
 
 @login_required
 @get_or_post
@@ -176,7 +176,7 @@ def task_review(get, guts, review_id):
         review.complete = True
         review.full_clean()
         review.save()
-        return ViewResponse(next_review)
+        return ViewResponse('main:next-review')
 
 @login_required
 @get_or_post
@@ -194,7 +194,7 @@ def unmerge(get, guts, task_id):
             wip = WorkInProgress(user=guts.user, task=task)
             wip.full_clean()
             wip.save()
-        return ViewResponse(task_view, task_id)
+        return ViewResponse('main:view-task', task_id)
     else:
         return ForbiddenResponse("Only superusers may perform this operation.")
 
@@ -226,7 +226,7 @@ def wip_review(get, guts):
                               in guts.parameters.getlist("wips_to_delete")]
             for wip in wips_to_delete:
                 wip.delete()
-            return ViewResponse(wip_review)
+            return ViewResponse('main:wip-list')
         except WorkInProgress.DoesNotExist:
             return ForbiddenResponse("You can only delete a project " \
                                          "that you are an admin for.")

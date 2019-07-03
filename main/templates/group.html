@@ -6,7 +6,7 @@
 <h2>User{{ users|length|pluralize }}</h2>
 <ul class="hlist">
   {% for username in users %}
-  <li><a href="{% url 'main.views.overview.one_user' username %}">{{ username }}</a></li>
+  <li><a href="{% url 'main:view-user' username %}">{{ username }}</a></li>
   {% endfor %}
 </ul>
 <h2>Email Addresses</h2>
@@ -21,7 +21,7 @@
 <h2>Annotate permission for</h2>
 <ul>
   {% for p in annotates %}
-  <li><a href="{% url 'main.views.overview.one_project' p.id %}">{{ p.title }}</a></li>
+  <li><a href="{% url 'main:view-project' p.id %}">{{ p.title }}</a></li>
   {% endfor %}
 </ul>
 {% else %}
@@ -32,7 +32,7 @@
 <h2>Merge permission for</h2>
 <ul>
   {% for p in merges %}
-  <li><a href="{% url 'main.views.overview.one_project' p.id %}">{{ p.title }}</a></li>
+  <li><a href="{% url 'main:view-project' p.id %}">{{ p.title }}</a></li>
   {% endfor %}
 </ul>
 {% else %}

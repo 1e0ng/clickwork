@@ -21,7 +21,7 @@
     <td class="has_num">{{ project.id }}</td>
     <td>{{ project.type }}</td>
     <td>{{ project.priority }} ({{project.priority_display}})</td>
-    <td><a href="{% url 'main.views.overview.one_project' project.id %}">{{ project.title }}</a></td>
+    <td><a href="{% url 'main:view-project' project.id %}">{{ project.title }}</a></td>
     <td class="has_num">{{ project.remaining_to_tag }}</td>
     <td class="has_num">{{ project.remaining_to_merge }}</td>
     <td class="has_num">{{ project.merged }}</td>

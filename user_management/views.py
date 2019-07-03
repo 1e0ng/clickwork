@@ -41,7 +41,7 @@ def change_password(get, guts):
             if guts.user.check_password(cleaned['old_pass']) and cleaned['pass1'] == cleaned['pass2']:
                 guts.user.set_password(cleaned['pass1'])
                 guts.user.save()
-                return ViewResponse(main.views.base.home)
+                return ViewResponse('main:home')
             elif not guts.user.check_password(cleaned['old_pass']):
                 message = "You did not enter your current password correctly"
             else:

@@ -23,7 +23,7 @@
  </div>
   {% if not user.is_anonymous %}
    <div id="user">Logged in as <a href="/user/{{user}}/">{{user}}</a> | 
-     <a href="{% url 'user_management.views.change_password' %}">Change password</a> |
+     <a href="{% url 'user_management:change-password' %}">Change password</a> |
      <a href="/accounts/logout/">Logout</a></div>
   {% else %}
     <div id="user"><a href="/accounts/login/">Login</a></div>

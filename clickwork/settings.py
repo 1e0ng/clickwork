@@ -15,6 +15,9 @@ ALLOWED_HOSTS = ['0.0.0.0']
 SITE_ID = 1
 
 INSTALLED_APPS = (
+    'main',
+    'user_management',
+
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -22,9 +25,6 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.admin',
-    'main',
-    'user_management',
-    #'django_hudson'
 )
 
 MIDDLEWARE_CLASSES = (
