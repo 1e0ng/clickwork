@@ -3,7 +3,6 @@ from __future__ import print_function
 from django import forms
 from django.contrib.auth.models import User, AnonymousUser
 from django.contrib.sessions.backends.db import SessionStore
-from django.core.context_processors import csrf
 from django.core.urlresolvers import reverse
 import django.db.models
 from django.db.models.query import QuerySet

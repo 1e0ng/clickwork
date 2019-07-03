@@ -5,14 +5,10 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.urlresolvers import resolve, reverse
 from django.utils import timezone
-from django.http import HttpResponseRedirect
-from django.shortcuts import render_to_response
 from django.template.loader import get_template
 from main.models import Task, WorkInProgress, Response, Result, Review, AutoReview, PageTrack, Announcement
-from main.wrapper import get, get_or_post, TemplateResponse, ViewResponse, RefererResponse, \
-    ForbiddenResponse, RequestGuts
+from main.wrapper import get, get_or_post, TemplateResponse, ViewResponse, ForbiddenResponse, RequestGuts
 from six.moves.urllib.parse import urlparse
-import datetime
 import sys
 from django.db import transaction
 
@@ -240,7 +236,8 @@ def track_page_visit(get, guts):
 
 ### These are the pages that might be shown in the sitemap.
 ### They must all be accessible to at least some users without parameters or URL variations.
-PAGES = (("Tasks", abandon_wip, "Abandon the work in progress"),
+PAGES = []
+'''Tasks", abandon_wip, "Abandon the work in progress"),
          ("Accounts", user_management.views.change_password, "Change your password"),
          ("Accounts", main.views.timesheets.timesheet, "Generate (estimated) timesheets"),
          ("Overviews", main.views.task.wip_review, "See works in progress"),
@@ -248,3 +245,4 @@ PAGES = (("Tasks", abandon_wip, "Abandon the work in progress"),
          ("Overviews", main.views.overview.all_groups, "See groups"),
          ("Overviews", main.views.overview.all_users, "See users"),
          )
+         '''

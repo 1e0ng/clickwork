@@ -2,9 +2,7 @@ from __future__ import absolute_import
 from django.contrib.sites.models import Site
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render_to_response
-from django.http import HttpResponseRedirect
-from django.conf import settings 
+from django.conf import settings
 from django.template.loader import get_template
 from django.core.mail import send_mail
 
