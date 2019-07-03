@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 from django import forms
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
@@ -9,7 +11,7 @@ from django.template.loader import get_template
 from main.models import Task, WorkInProgress, Response, Result, Review, AutoReview, PageTrack, Announcement
 from main.wrapper import get, get_or_post, TemplateResponse, ViewResponse, RefererResponse, \
     ForbiddenResponse, RequestGuts
-from urlparse import urlparse
+from six.moves.urllib.parse import urlparse
 import datetime
 import sys
 from django.db import transaction
@@ -67,7 +69,7 @@ def visitable(user):
         	    return None
         	else:
         	    return reverse(view_function)
-        except Exception, E:
+        except Exception as E:
             return None # If a view throws an exception because it's not configured, don't throw errors on the homepage
     visitable_pages = [{"category": category,
                         "url": reverse_if_visitable(view_function),
@@ -218,7 +220,7 @@ def track_page_visit(get, guts):
             if form.is_valid():
                 url = form.cleaned_data["url"]
                 view, view_args, view_kwargs = resolve(urlparse(url).path)
-                print >>sys.stderr, repr(form.cleaned_data)
+                print(repr(form.cleaned_data), file=sys.stderr)
                 pt = PageTrack(user=form.cleaned_data["user"],
                                view_name=view.__name__,
                                view_args=repr(view_args),

@@ -1,7 +1,8 @@
+from __future__ import absolute_import
 from django.db import models
 from main.models import Task, Response, Project, ProjectType
 import csv
-from cStringIO import StringIO
+from io import StringIO
 
 class CategorizationProject(Project):
     def handle_input(self, input):

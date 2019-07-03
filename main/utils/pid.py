@@ -2,6 +2,7 @@
 # used from http://code.activestate.com/recipes/577911-context-manager-for-a-daemon-pid-file/
 # licensed under MIT licese
 
+from __future__ import absolute_import
 import fcntl
 import os
 

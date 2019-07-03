@@ -1,6 +1,7 @@
 """Classes for managing the view that shows how much time users have spent on tagging and merging.
 """
 
+from __future__ import absolute_import
 import datetime
 import sys
 from main.models import Response, Result
@@ -10,6 +11,7 @@ from django.utils import timezone
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.decorators import login_required
 from django.template.loader import get_template
+import six
 
 ### TODO: Replace usages of "tagging"/"merging" and "week"/"month" throughout
 ### with type-safe enums.
@@ -326,9 +328,9 @@ class TimeChart(object):
             else:
                 points_by_uid_and_block[uid] = {point.block: [point]}
         bins_by_uid_and_block = {}
-        for (uid, points_by_block) in points_by_uid_and_block.iteritems():
+        for (uid, points_by_block) in six.iteritems(points_by_uid_and_block):
             bins_by_block = {}
-            for (block, points) in points_by_block.iteritems():
+            for (block, points) in six.iteritems(points_by_block):
                 bins_by_block[block] = TaskBin(User.objects.get(pk=uid), block, points)
             bins_by_uid_and_block[uid] = bins_by_block
         self.report = bins_by_uid_and_block
@@ -379,7 +381,7 @@ def timesheet(guts):
                     users.add(user)
             chart = TimeChart(spec, users)
             rows = []
-            for (uid, bins_by_block) in chart.report.iteritems():
+            for (uid, bins_by_block) in six.iteritems(chart.report):
                 user = User.objects.get(pk=uid)
                 cells = []
                 for block in spec:

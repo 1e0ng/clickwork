@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.db.models import Count
 from django.db import connection
 from django.contrib.auth.decorators import login_required
@@ -8,6 +9,8 @@ from main.models import Project, ProjectTag, Response, Result, Review, Task, Pro
 from main.wrapper import get, DefaultResponse, TemplateResponse, ForbiddenResponse
 
 import sys
+import six
+from functools import reduce
 
 def all_group_members(groups, cache=None):
     """Takes a list of group objects, and returns the usernames of every
@@ -28,7 +31,7 @@ def project_info(p, cache=None):
             "title": p.title,
             "url": p.get_absolute_url(),
             "type": p.type,
-            "admin": unicode(p.admin),
+            "admin": six.text_type(p.admin),
             "priority": p.get_priority_display(),
             "task_count": p.task_set.count(),
             "annotator_groups": [{"name": g.name, "id": g.id}

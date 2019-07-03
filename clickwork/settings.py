@@ -1,5 +1,6 @@
 # Django settings for clickwork project.
 
+from __future__ import absolute_import
 import os
 BASE_PATH = os.path.dirname(os.path.dirname(__file__))
 
@@ -166,7 +167,7 @@ TASK_TYPES = ['simple']
 
 ## Use this octal file permission number for the files
 ## in the archive that is created when a project is exported.
-CLICKWORK_EXPORT_FILE_PERMISSIONS = 0444
+CLICKWORK_EXPORT_FILE_PERMISSIONS = 444
 
 ## These are the usernames of people who should not both annotate the
 ## same task.  E.g., (("a", "b"), ("c", "d", "e")) means that if "a"
@@ -176,6 +177,6 @@ CLICKWORK_EXPORT_FILE_PERMISSIONS = 0444
 CLICKWORK_KEEP_APART = (("TEST_EXCLUSION_1", "TEST_EXCLUSION_2"),)
 
 try:
-    from local_settings import *
+    from .local_settings import *
 except ImportError:
     pass

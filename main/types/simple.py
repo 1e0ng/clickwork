@@ -1,8 +1,9 @@
+from __future__ import absolute_import
 from main.models import Project, Task, Response, Result, ProjectType
 from django.db import models
 
 import csv
-from cStringIO import StringIO
+from io import StringIO
 
 class SimpleProject(Project):
     class Meta:

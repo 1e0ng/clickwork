@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.contrib.sites.models import Site
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required

@@ -1,4 +1,6 @@
 #!/usr/bin/python
+from __future__ import absolute_import
+from __future__ import print_function
 import sys, os
 import syslog
 
@@ -8,7 +10,7 @@ try:
     import daemon
     import pwd
 
-    import pid
+    from . import pid
 
     djangopath = os.path.join(os.path.dirname(sys.argv[0]),"../../")
     sys.path.append(djangopath)
@@ -19,7 +21,7 @@ try:
     import traceback
     from django.db import transaction
 
-except Exception, e :
+except Exception as e :
     syslog.syslog(syslog.LOG_ERR, "Failed importing %s" % e)
     raise e
 
@@ -35,12 +37,12 @@ def check_uploads():
     pu = ProjectUpload.objects.filter(complete=False)
     if pu.count():
         upload = pu[0]
-        print "Running %s" % upload.id
+        print("Running %s" % upload.id)
         error = None
         try:
             run_upload(upload)
-        except Exception, E:
-            tb = "".join(traceback.format_tb(sys.exc_traceback))
+        except Exception as E:
+            tb = "".join(traceback.format_tb(sys.exc_info()[2]))
             error = "Exception Type: %s, Text: %s\nTraceback:\n%s" % (type(E), str(E), tb)    
         upload.complete = True
         if error:
@@ -49,7 +51,7 @@ def check_uploads():
         upload.full_clean()
         upload.save()
         
-        print "Done %s" % upload.id
+        print("Done %s" % upload.id)
 
 def main_loop():
     while True:
@@ -73,6 +75,6 @@ if __name__ == "__main__":
 
         with context:
             main_loop()
-    except Exception, e:
+    except Exception as e:
         syslog.syslog(syslog.LOG_ERR, "Unhandled Exception %s - Died" % e)
         raise e

@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 from django import forms
 from django.contrib.auth.models import User, AnonymousUser
 from django.contrib.sessions.backends.db import SessionStore
@@ -12,7 +14,7 @@ from django.utils.datastructures import MultiValueDict
 
 from base64 import b64encode
 from functools import wraps
-from urlparse import urlsplit, urlunsplit
+from six.moves.urllib.parse import urlsplit, urlunsplit
 from datetime import datetime, date
 import json
 
@@ -131,7 +133,7 @@ class Encoder(json.JSONEncoder):
             return list(obj)
         elif isinstance(obj, datetime) or isinstance(obj, date):
             return obj.isoformat()
-        print >>sys.stderr, "*** Trouble encoding an object of type %r" % type(obj)
+        print("*** Trouble encoding an object of type %r" % type(obj), file=sys.stderr)
         return json.JSONEncoder.default(self, obj)
 
 class ResponseSeed(object):
@@ -145,10 +147,10 @@ class ResponseSeed(object):
             raise self.FormatNotSupported(format)
 
     def sprout_html(self, context):
-        raise NotImplementedError, "ResponseSeed is an abstract class"
+        raise NotImplementedError("ResponseSeed is an abstract class")
 
     def sprout_json(self, context):
-        raise NotImplementedError, "ResponseSeed is an abstract class"
+        raise NotImplementedError("ResponseSeed is an abstract class")
 
     class FormatNotSupported(WrapperException):
         def __init__(self, format):
@@ -339,9 +341,9 @@ def dispatch_on_method(f, d):
             guts = RequestGuts(request)
             try:
                 seed = d[request.method](guts, *args, **kwargs)
-            except Http404, e:
+            except Http404 as e:
                 seed = NotFoundResponse(e.message)
-            except Exception, e:
+            except Exception as e:
                 log_message = "%s to %s raised %s: %s" % (request.method,
                                                           request.path,
                                                           type(e).__name__,
@@ -360,7 +362,7 @@ def dispatch_on_method(f, d):
                 else:
                     guts.log_error(log_message)
         else:
-            response = HttpResponseNotAllowed(d.keys())
+            response = HttpResponseNotAllowed(list(d.keys()))
         return response
     g.dispatcher = d
     return g

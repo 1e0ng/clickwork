@@ -3,6 +3,8 @@
 For the sake of using the test client and the expectations code that depends on it,
 this is structured as a subclass of TestCase, but it's really not supposed to run
 in the regular series of unit tests."""
+from __future__ import absolute_import
+from __future__ import print_function
 from django.conf import settings
 from django.contrib.auth.models import Group, User
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -15,6 +17,7 @@ import main.views.project
 import os
 import sys
 import user_management.views
+from six.moves import range
 
 class NeedsFreshEyesSetup(TestCase):
     def login_as(self, username):
@@ -90,7 +93,7 @@ class NeedsFreshEyesSetup(TestCase):
         self.project.save()
 
     def populate_project(self):
-        f = SimpleUploadedFile("questions", "\n".join(self.quiz.keys()))
+        f = SimpleUploadedFile("questions", "\n".join(list(self.quiz.keys())))
         f.open("rb")
         context = {"action": "Upload", "upload": f}
         target = WebTarget("POST", main.views.project.project_upload,
@@ -117,7 +120,7 @@ class NeedsFreshEyesSetup(TestCase):
                                                        main.views.base.home))
                 answer_expectation = ViewExpectation(Conditions.null(), answer_target)
                 answer_expectation.check(self, answer_input_context)
-                print >>sys.stderr, "User", user.username, "answered", question
+                print("User", user.username, "answered", question, file=sys.stderr)
                 ## At this point the user is holding a WIP for the third task,
                 ## but we want that WIP to be released.
                 abandon_target = WebTarget("POST", main.views.base.abandon_wip,

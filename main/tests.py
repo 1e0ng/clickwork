@@ -21,6 +21,7 @@ u'Test Project'
 []
 >>> p.delete()
 """
+from __future__ import absolute_import
 from django.test.client import Client
 from django.test import TestCase
 from django.utils import timezone
@@ -43,7 +44,7 @@ import doctest
 import sys
 import unittest
 
-from cStringIO import StringIO
+from io import StringIO
 from base64 import b64decode
 from zipfile import ZipFile, ZIP_DEFLATED
 
@@ -135,7 +136,7 @@ class ProjectViews(TestCase):
             zipped_64 = output_context["contents_in_base64"]
             zipped = ZipFile(StringIO(b64decode(zipped_64)), "r", ZIP_DEFLATED)
             permissions_are_right = [zi.external_attr == \
-                                         settings.CLICKWORK_EXPORT_FILE_PERMISSIONS << 16L
+                                         settings.CLICKWORK_EXPORT_FILE_PERMISSIONS << 16
                                      for zi in zipped.infolist()]
             return all(permissions_are_right)
         self.client.login(username="testuser_getnexttask", password="abc")

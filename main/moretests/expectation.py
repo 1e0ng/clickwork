@@ -1,10 +1,12 @@
 """Framework building on the Django unit tests to encapsulate 'expectations'."""
+from __future__ import absolute_import
+from __future__ import print_function
 from django.core.urlresolvers import reverse, resolve
 from django.test import TestCase
 from django.test.client import Client
 import json
 import sys
-from urlparse import urlparse
+from six.moves.urllib.parse import urlparse
 from main.wrapper import Encoder
 
 def abstract():
@@ -65,8 +67,8 @@ class Conditions(object):
         developing a test if you are not sure what \"good\" outputs
         should look like."""
         def dc(input_context, output_context):
-            print >>sys.stderr, ">>> IN", json.dumps(input_context, cls=Encoder, indent=2)
-            print >>sys.stderr, "<<< OUT", json.dumps(output_context, cls=Encoder, indent=2)
+            print(">>> IN", json.dumps(input_context, cls=Encoder, indent=2), file=sys.stderr)
+            print("<<< OUT", json.dumps(output_context, cls=Encoder, indent=2), file=sys.stderr)
             return True
         return cls((), (dc,), ())
 

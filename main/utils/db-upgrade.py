@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+from __future__ import absolute_import
+from __future__ import print_function
 import optparse
 import json
 import subprocess
@@ -43,26 +45,26 @@ if __name__ == "__main__":
 
         db_version = get_version()
 
-        while upgrade_path.has_key(str(db_version)):
+        while str(db_version) in upgrade_path:
             if options.test:
                 # If we need an upgrade and we are just asking, yell
                 sys.exit("1")
 
             #If we are told to upgrade do it
             else:
-                while upgrade_path.has_key(str(db_version)):
+                while str(db_version) in upgrade_path:
                     for upgrade in upgrade_path[str(db_version)]:
-                        print "DB Version %s, applying %s to upgrade" % (db_version, upgrade)
+                        print("DB Version %s, applying %s to upgrade" % (db_version, upgrade))
                         apply_upgrade(upgrade)
                     if db_version == "":
                         db_version = 0
                     Version(version = db_version + 1).save() 
                     new_version = get_version()
                     if new_version == db_version:
-                        print "Upgrade from %s failed" % db_version
+                        print("Upgrade from %s failed" % db_version)
                         sys.exit(1)
                     db_version = new_version
-	print "Database now v%s" % db_version
+	print("Database now v%s" % db_version)
 
             
         

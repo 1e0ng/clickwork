@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django import forms
 from django.db import models
 from django.contrib import admin
@@ -9,6 +10,8 @@ from django.utils import timezone
 import datetime
 import inspect
 import sys
+import six
+from functools import reduce
 
 def abstract():
     """Function to work around (pre-2.6) Python's lack of abstract methods.
@@ -118,14 +121,14 @@ class Project(models.Model):
         return {"id": self.id,
                 "title": self.title,
                 "description": self.description,
-                "annotators": [unicode(g) for g in self.annotators.all()],
-                "mergers": [unicode(m) for m in self.mergers.all()],
+                "annotators": [six.text_type(g) for g in self.annotators.all()],
+                "mergers": [six.text_type(m) for m in self.mergers.all()],
                 "type": self.type,
-                "admin": unicode(self.admin),
+                "admin": six.text_type(self.admin),
                 "annotator_count": self.annotator_count,
                 "priority": self.priority,
                 "needs_fresh_eyes": self.needs_fresh_eyes,
-                "tags": [unicode(t) for t in self.tags.all()]}
+                "tags": [six.text_type(t) for t in self.tags.all()]}
 
     def export(self):
         """Returns a dict in which the keys are file names (which will
@@ -170,9 +173,7 @@ class TaskManager(models.Manager):
         TODO: This QuerySet does NOT filter out the tasks that the user
         HAS ALREADY annotated."""
         excluded_users = list(reduce(lambda s1, s2: s1.union(s2),
-                                     [frozenset(map(lambda username:
-                                                        User.objects.get(username=username),
-                                                    exclusion))
+                                     [frozenset([User.objects.get(username=username) for username in exclusion])
                                       for exclusion in settings.CLICKWORK_KEEP_APART
                                       if user.username in exclusion],
                                      frozenset()) - frozenset([user]))
@@ -228,10 +229,10 @@ class Task(models.Model):
     objects = TaskManager()
 
     def __unicode__(self):
-        return u"task %d of %s" % (self.id, unicode(self.project))
+        return u"task %d of %s" % (self.id, six.text_type(self.project))
 
     def summary(self):
-        return unicode(self)
+        return six.text_type(self)
 
     @models.permalink
     def get_absolute_url(self):
@@ -390,7 +391,7 @@ class Response(models.Model):
             raise ValidationError("Work on Response cannot end before it begins.")
 
     def __unicode__(self):
-        return u"response by %s to %s" % (unicode(self.user), unicode(self.task))
+        return u"response by %s to %s" % (six.text_type(self.user), six.text_type(self.task))
 
 class Result(models.Model):
     """Represents the merging of several users' work on one task.
@@ -407,7 +408,7 @@ class Result(models.Model):
         return None
 
     def __unicode__(self):
-        return u"merge by %s of %s" % (unicode(self.user), unicode(self.task))
+        return u"merge by %s of %s" % (six.text_type(self.user), six.text_type(self.task))
 
     def clean(self):
         super(Result, self).clean()
@@ -474,7 +475,7 @@ class WorkInProgress(models.Model):
     user = models.ForeignKey(User)
 
     def __unicode__(self):
-        return u"wip for %s working on %s" % (unicode(self.user), unicode(self.task))
+        return u"wip for %s working on %s" % (six.text_type(self.user), six.text_type(self.task))
     
     #: We store the start_time here, based on when the WIP is 
     #: created, so we can stash it on the Response later.
@@ -498,8 +499,8 @@ class ProjectUpload(models.Model):
     error = models.TextField(blank=True)
 
     def __unicode__(self):
-        return u"upload %d to %s at %s" % (self.id, unicode(self.project),
-                                           unicode(self.timestamp))
+        return u"upload %d to %s at %s" % (self.id, six.text_type(self.project),
+                                           six.text_type(self.timestamp))
 
 class ProjectType(object):
     """Represents a type of project; hence subclasses of this class
@@ -536,7 +537,7 @@ class Announcement(models.Model):
 # We load types here, because they load the configured subtypes,
 # so that we can have the registered models in subclasses be 
 # available as models.
-import types
+from . import types
 
 ##
 ## Set up code to receive login/logout signals and log them.  This

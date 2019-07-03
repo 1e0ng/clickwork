@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 # -*- encoding: utf-8 -*-
 
+from __future__ import absolute_import
+from __future__ import print_function
 from django import template
 from django.utils.html import conditional_escape
 from django.utils.safestring import mark_safe
-import urllib
+import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 import re
 register = template.Library()
 
@@ -38,9 +40,9 @@ def fancyurlize(match):
     if extra:
         text = "%s?..." % text
     try:
-        text = urllib.unquote(text).encode("latin-1")
+        text = six.moves.urllib.parse.unquote(text).encode("latin-1")
     except Exception:    
-        text = urllib.unquote(text).encode("utf-8")
+        text = six.moves.urllib.parse.unquote(text).encode("utf-8")
     return_value = u'<a href="%s" target="_blank">%s</a>%s' % (
         conditional_escape(value),
         conditional_escape(text),
@@ -68,7 +70,7 @@ test_cases = [
 if __name__ == "__main__":
     for i in test_cases:
         if urlfilter(i[0]) == i[1]:
-            print "Pass"
+            print("Pass")
         else:
             val = urlfilter(i[0])
-            print "Fail: Got: %s\n--\nExpected: %s" % (val, i[1])
+            print("Fail: Got: %s\n--\nExpected: %s" % (val, i[1]))

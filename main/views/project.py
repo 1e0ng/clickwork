@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 from django.shortcuts import get_object_or_404, render_to_response
 from django.template.loader import get_template
 from django.http import HttpResponse
@@ -5,7 +7,7 @@ from main.models import Project, ProjectUpload, Task, Response
 from django.contrib.auth.decorators import login_required
 from django.forms import ModelForm
 from main.helpers import get_project_type
-from cStringIO import StringIO
+from io import StringIO
 import zipfile
 from django.conf import settings
 from main.views.overview import one_project
@@ -18,6 +20,7 @@ import django.utils.html
 from django.conf import settings
 
 from functools import wraps
+import six
 def project_owner_required(f):
     """Wraps a function that takes, as its first arguments, either a
     RequestGuts and a Project or a boolean, a RequestGuts, and a
@@ -77,7 +80,7 @@ def project_agreement(guts, project):
         same = ptype.test_agreement(responses)
         same_counts[same] = same_counts.setdefault(same, 0) + 1
     template = get_template('project/agreement.html') 
-    print same_counts ## TODO: is this leftover debugging code?
+    print(same_counts) ## TODO: is this leftover debugging code?
     return TemplateResponse(template, {'counts': same_counts, 'task_count': tasks.count()})
 
 @http_basic_auth
@@ -162,10 +165,10 @@ def project_export(guts, project):
     buffer = StringIO()
     zip = zipfile.ZipFile(buffer,  "w", zipfile.ZIP_DEFLATED)
     def put(pathname, data):
-        if isinstance(data, unicode):
+        if isinstance(data, six.text_type):
             data = data.encode("utf-8")
         info = zipfile.ZipInfo(pathname)
-        info.external_attr = settings.CLICKWORK_EXPORT_FILE_PERMISSIONS << 16L
+        info.external_attr = settings.CLICKWORK_EXPORT_FILE_PERMISSIONS << 16
         zip.writestr(info, data)
     ## a project type can put an export method on its task and/or its project subclass
     try:

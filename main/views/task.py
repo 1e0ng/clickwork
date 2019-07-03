@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.shortcuts import get_object_or_404
 from main.models import Project, Task, WorkInProgress, Response, Result, User, Review, AutoReview
 from main.types import type_list
@@ -11,6 +12,7 @@ from django.utils.datastructures import MultiValueDictKeyError
 import datetime
 import sys
 import traceback
+import six
 
 @login_required
 @get_or_post
@@ -69,7 +71,7 @@ def task_view(get, guts, task_id):
         ## an admin can look at any task, but not even an admin
         ## can submit a response or result to a task without getting a WIP first
         if not (task.viewable_by(guts.user) and get):
-            return ForbiddenResponse(u"You are not allowed to view %s" % unicode(task))
+            return ForbiddenResponse(u"You are not allowed to view %s" % six.text_type(task))
     if get:
         return TemplateResponse(task.template(), task.template_data())
     else:
