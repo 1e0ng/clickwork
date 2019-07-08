@@ -1,7 +1,7 @@
 {# $Id$ #}
 {% extends "base.html" %}
 {% block title %}Home{% endblock %}
-{% block heading %}Welcome to Clickwork{% endblock %}
+{% block heading %}Welcome to Clickwork <small>With Django {{django_version}}</small>{% endblock %}
 {% block content %}
 {% if recent_responses %}
 <div id="recent_tasks">

@@ -55,6 +55,7 @@ TEMPLATES = [
                 'django.template.context_processors.media',
                 'django.template.context_processors.static',
                 'django.template.context_processors.tz',
+                'main.context_processors.django_version',
             ]
         },
     }

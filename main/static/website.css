@@ -30,6 +30,10 @@ padding: 4px 16px 0px 16px;
 vertical-align: top;
 }
 
+#header small{
+    font-size:12px;
+}
+
 #browserWarning {
     background: #6d87a1;
     color: #fff;
