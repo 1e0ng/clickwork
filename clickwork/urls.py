@@ -12,7 +12,10 @@ urlpatterns = [
         serve,
         {'document_root': 'clickwork/static', 'path': 'favicon.ico'},
     ),
-    url(r'^user_management/', include('user_management.urls')),
-    url(r'^', include('main.urls')),
+    url(
+        r'^user_management/',
+        include('user_management.urls', namespace='user_management'),
+    ),
+    url(r'^', include('main.urls', namespace='main')),
     url(r'^admin/', admin.site.urls),
 ]

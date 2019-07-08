@@ -125,8 +125,8 @@ class Project(models.Model):
                         r.full_clean()
                         r.save()
 
-    def url(self):
-        return reverse("main:view-project", [str(self.id)])
+    def get_absolute_url(self):
+        return reverse("main:view-project", args=[str(self.id)])
 
     def as_dict(self):
         return {
@@ -272,8 +272,9 @@ class Task(models.Model):
     def summary(self):
         return six.text_type(self)
 
-    def url(self):
-        return reverse("main:view-task", (), {"task_id": str(self.id)})
+    def get_absolute_url(self):
+
+        return reverse("main:view-task", kwargs={"task_id": str(self.id)})
 
     @property
     def merge_in_progress(self):
