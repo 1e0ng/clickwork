@@ -1,11 +1,20 @@
 from __future__ import absolute_import
 from __future__ import print_function
+
+from io import StringIO
+import zipfile
+from functools import wraps
+import six
+
 from django.shortcuts import get_object_or_404
 from main.models import Project, ProjectUpload, Task, Response
 from django.contrib.auth.decorators import login_required
 from django.forms import ModelForm
-from io import StringIO
-import zipfile
+from django.template.loader import get_template
+from django.db.models import Count
+import django.utils.html
+from django.conf import settings
+
 from main.wrapper import (
     get,
     get_or_post,
@@ -18,13 +27,6 @@ from main.wrapper import (
     ViewResponse,
 )
 from main.helpers import get_project_type, http_basic_auth
-from django.template.loader import get_template
-from django.db.models import Count
-import django.utils.html
-from django.conf import settings
-
-from functools import wraps
-import six
 
 
 def project_owner_required(f):

@@ -26,6 +26,8 @@ class SimpleTask(Task):
     class Meta:
         app_label = "main"
 
+    objects = models.Manager()
+
     question = models.TextField()
 
     #: The Tagging template is the template which is

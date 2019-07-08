@@ -1,11 +1,13 @@
 from __future__ import absolute_import
+
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User
+from django.template.loader import get_template
+
 from main.models import Response, Result
 from main.wrapper import get, TemplateResponse, ForbiddenResponse
 from main.helpers import get_project_type
-from django.template.loader import get_template
 
 
 @login_required

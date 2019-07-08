@@ -1,5 +1,9 @@
 from __future__ import absolute_import
-from django import forms
+
+import inspect
+import six
+from functools import reduce
+
 from django.db import models
 from django.contrib import admin
 from django.contrib.auth.models import Group, User
@@ -7,11 +11,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.template.loader import get_template
 from django.utils import timezone
-import datetime
-import inspect
-import sys
-import six
-from functools import reduce
+from django.urls import reverse
 
 
 def abstract():
@@ -85,7 +85,7 @@ class Project(models.Model):
     #: Currently, projects have a single administrator; the Admin should
     #: eventually have some sort of control over the project.
     #: TODO: Give admin some sort of control over the project.
-    admin = models.ForeignKey(User)
+    admin = models.ForeignKey(User, models.CASCADE)
 
     #: The number of annotators/workers that each Task should be given to.
     #: IGNORED FOR AUTO-REVIEW PROJECTS.
@@ -125,9 +125,8 @@ class Project(models.Model):
                         r.full_clean()
                         r.save()
 
-    @models.permalink
-    def get_absolute_url(self):
-        return ("main:view-project", [str(self.id)])
+    def url(self):
+        return reverse("main:view-project", [str(self.id)])
 
     def as_dict(self):
         return {
@@ -261,7 +260,7 @@ class Task(models.Model):
     second model with a ForeignKey, if that seems preferable for some
     reason."""
 
-    project = models.ForeignKey(Project)
+    project = models.ForeignKey(Project, models.CASCADE)
     completed_assignments = models.IntegerField(default=0)
     completed = models.BooleanField(default=False)
 
@@ -273,9 +272,8 @@ class Task(models.Model):
     def summary(self):
         return six.text_type(self)
 
-    @models.permalink
-    def get_absolute_url(self):
-        return ("main:view-task", (), {"task_id": str(self.id)})
+    def url(self):
+        return reverse("main:view-task", (), {"task_id": str(self.id)})
 
     @property
     def merge_in_progress(self):
@@ -426,8 +424,8 @@ def is_not_auto_review(task_id):
 class Response(models.Model):
     """Represents one user's work on one task.  Subclassed for specific tasks."""
 
-    user = models.ForeignKey(User)
-    task = models.ForeignKey(Task)
+    user = models.ForeignKey(User, models.CASCADE)
+    task = models.ForeignKey(Task, models.CASCADE)
     end_time = models.DateTimeField(auto_now_add=True)
     start_time = models.DateTimeField()
 
@@ -456,8 +454,8 @@ class Result(models.Model):
     (The 'user' field indicates which user was responsible for the merging.)
     Subclassed for specific tasks."""
 
-    user = models.ForeignKey(User)
-    task = models.OneToOneField(Task, validators=[is_not_auto_review])
+    user = models.ForeignKey(User, models.CASCADE)
+    task = models.OneToOneField(Task, models.CASCADE, validators=[is_not_auto_review])
     end_time = models.DateTimeField(auto_now_add=True)
     start_time = models.DateTimeField()
 
@@ -484,14 +482,14 @@ class ExpectedResponse(models.Model):
     """For tasks associated with auto-review projects, represents the
     'right answer' that the annotator is supposed to provide."""
 
-    task = models.OneToOneField(Task, validators=[is_auto_review])
+    task = models.OneToOneField(Task, models.CASCADE, validators=[is_auto_review])
 
 
 class AutoReview(models.Model):
     """Keeps track of which users have seen, or are seeing, which auto-review projects."""
 
-    task = models.ForeignKey(Task, validators=[is_auto_review])
-    user = models.ForeignKey(User)
+    task = models.ForeignKey(Task, models.CASCADE, validators=[is_auto_review])
+    user = models.ForeignKey(User, models.CASCADE)
     ## If null, means that the user has not yet been shown this task for review.
     start_time = models.DateTimeField(null=True, blank=True)
     ## If null, means that the user has been shown this task
@@ -523,7 +521,7 @@ class Review(models.Model):
        the user as additional 'things to complete' by the UI.
     """
 
-    response = models.ForeignKey(Response)
+    response = models.ForeignKey(Response, models.CASCADE)
     comment = models.TextField(blank=True, null=True)
     creation_time = models.DateTimeField(auto_now_add=True)
     complete = models.BooleanField(default=False)
@@ -544,8 +542,8 @@ class WorkInProgress(models.Model):
     user back to the same task if they lose their browser window,
     etc."""
 
-    task = models.ForeignKey(Task, validators=[is_not_auto_review])
-    user = models.ForeignKey(User)
+    task = models.ForeignKey(Task, models.CASCADE, validators=[is_not_auto_review])
+    user = models.ForeignKey(User, models.CASCADE)
 
     def __unicode__(self):
         return u"wip for %s working on %s" % (
@@ -570,7 +568,7 @@ class ProjectUpload(models.Model):
     """
 
     upload = models.FileField(upload_to="uploads/")
-    project = models.ForeignKey(Project)
+    project = models.ForeignKey(Project, models.CASCADE)
     timestamp = models.DateTimeField(auto_now=True)
     complete = models.BooleanField(default=False, editable=False)
     error = models.TextField(blank=True)
@@ -600,7 +598,9 @@ class ProjectType(object):
 class PageTrack(models.Model):
     """Records when users arrive and depart from pages in the application."""
 
-    user = models.ForeignKey(User, help_text="The user who saw the page.")
+    user = models.ForeignKey(
+        User, models.CASCADE, help_text="The user who saw the page."
+    )
     view_name = models.CharField(
         max_length=100,
         help_text="The name of the Django view function associated with the page.",

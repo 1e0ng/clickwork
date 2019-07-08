@@ -2,19 +2,18 @@
 """
 
 from __future__ import absolute_import
+
+import six
 import datetime
-from main.models import Response, Result
-from main.wrapper import (
-    get,
-    ForbiddenResponse,
-    TemplateResponse,
-)
+
 from django import forms
 from django.utils import timezone
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.decorators import login_required
 from django.template.loader import get_template
-import six
+
+from main.models import Response, Result
+from main.wrapper import get, ForbiddenResponse, TemplateResponse
 
 ### TODO: Replace usages of "tagging"/"merging" and "week"/"month" throughout
 ### with type-safe enums.

@@ -1,9 +1,18 @@
 from __future__ import absolute_import
 from __future__ import print_function
+
+from base64 import b64encode
+from functools import wraps
+from six.moves.urllib.parse import urlsplit, urlunsplit
+from datetime import datetime, date
+import json
+import sys
+import logging
+
 from django import forms
 from django.contrib.auth.models import User, AnonymousUser
 from django.contrib.sessions.backends.db import SessionStore
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 import django.db.models
 from django.db.models.query import QuerySet
 from django.http import (
@@ -19,15 +28,6 @@ from django.http import (
 from django.template.loader import get_template
 from django.utils.datastructures import MultiValueDict
 
-from base64 import b64encode
-from functools import wraps
-from six.moves.urllib.parse import urlsplit, urlunsplit
-from datetime import datetime, date
-import json
-
-import sys
-
-import logging
 
 logger = logging.getLogger(__name__)
 

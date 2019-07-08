@@ -1,11 +1,17 @@
 from __future__ import absolute_import
 from __future__ import print_function
+
+from six.moves.urllib.parse import urlparse
+import sys
+
 from django import forms
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.core.urlresolvers import resolve, reverse
+from django.urls import resolve, reverse
 from django.utils import timezone
 from django.template.loader import get_template
+from django.db import transaction
+
 from main.models import (
     Task,
     WorkInProgress,
@@ -24,15 +30,7 @@ from main.wrapper import (
     ForbiddenResponse,
     RequestGuts,
 )
-from six.moves.urllib.parse import urlparse
-import sys
-from django.db import transaction
 
-import main.views.overview
-import main.views.project
-import main.views.timesheets
-import main.views.task
-import user_management.views
 
 ###
 ### WARNING: For efficiency, the list of links displayed on the main

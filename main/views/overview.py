@@ -1,10 +1,14 @@
 from __future__ import absolute_import
-from django.db.models import Count
+
+import six
+from functools import reduce
+
 from django.db import connection
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group, User
 from django.shortcuts import get_object_or_404
 from django.template.loader import get_template
+
 from main.models import (
     Project,
     ProjectTag,
@@ -14,11 +18,7 @@ from main.models import (
     Task,
     ProjectUpload,
 )
-from main.wrapper import get, DefaultResponse, TemplateResponse, ForbiddenResponse
-
-import sys
-import six
-from functools import reduce
+from main.wrapper import get, TemplateResponse, ForbiddenResponse
 
 
 def all_group_members(groups, cache=None):
