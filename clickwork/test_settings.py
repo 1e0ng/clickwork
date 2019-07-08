@@ -6,5 +6,5 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'main',
     'user_management',
-    'django_hudson'
+    'django_hudson',
 )

@@ -2,6 +2,7 @@
 
 from __future__ import absolute_import
 import os
+
 BASE_PATH = os.path.dirname(os.path.dirname(__file__))
 
 SECRET_KEY = '7wwt(!57n(mx5)@v61^(7#a66hhtq_*51sqn+6l78-t*f=d)45'
@@ -17,7 +18,6 @@ SITE_ID = 1
 INSTALLED_APPS = (
     'main',
     'user_management',
-
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -55,9 +55,9 @@ TEMPLATES = [
                 'django.template.context_processors.media',
                 'django.template.context_processors.static',
                 'django.template.context_processors.tz',
-            ],
+            ]
         },
-    },
+    }
 ]
 
 WSGI_APPLICATION = 'clickwork.wsgi.application'
@@ -65,7 +65,7 @@ WSGI_APPLICATION = 'clickwork.wsgi.application'
 DATABASES = {
     "default": {
         "NAME": "default_db",
-        "ENGINE": "django.db.backends.postgresql_psycopg2"
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
     }
 }
 
@@ -124,7 +124,7 @@ STATICFILES_DIRS = (
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-#    'django.contrib.staticfiles.finders.DefaultStorageFinder',
+    #    'django.contrib.staticfiles.finders.DefaultStorageFinder',
 )
 
 
@@ -134,8 +134,7 @@ STATICFILES_FINDERS = (
 ADMIN_MEDIA_PREFIX = '/media/'
 
 
-
-# should be changed if you're going to user management 
+# should be changed if you're going to user management
 EMAIL_FROM = "Clickwork <clickwork@example.com>"
 
 # A sample logging configuration. The only tangible logging
@@ -146,16 +145,12 @@ EMAIL_FROM = "Clickwork <clickwork@example.com>"
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
-    'filters': {
-        'require_debug_false': {
-            '()': 'django.utils.log.RequireDebugFalse'
-        }
-    },
+    'filters': {'require_debug_false': {'()': 'django.utils.log.RequireDebugFalse'}},
     'handlers': {
         'mail_admins': {
             'level': 'ERROR',
             'filters': ['require_debug_false'],
-            'class': 'django.utils.log.AdminEmailHandler'
+            'class': 'django.utils.log.AdminEmailHandler',
         }
     },
     'loggers': {
@@ -163,8 +158,8 @@ LOGGING = {
             'handlers': ['mail_admins'],
             'level': 'ERROR',
             'propagate': True,
-        },
-    }
+        }
+    },
 }
 
 # List of strings corresponding to task types.

@@ -6,8 +6,16 @@ from django.contrib.sessions.backends.db import SessionStore
 from django.core.urlresolvers import reverse
 import django.db.models
 from django.db.models.query import QuerySet
-from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, HttpResponseServerError, HttpResponseNotFound, HttpResponseForbidden, HttpResponseNotAllowed, QueryDict, Http404
-from django.template import RequestContext
+from django.http import (
+    HttpResponse,
+    HttpResponseRedirect,
+    HttpResponseServerError,
+    HttpResponseNotFound,
+    HttpResponseForbidden,
+    HttpResponseNotAllowed,
+    QueryDict,
+    Http404,
+)
 from django.template.loader import get_template
 from django.utils.datastructures import MultiValueDict
 
@@ -20,20 +28,24 @@ import json
 import sys
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 """Classes to mediate between the business logic in the views and the
 HTTP-specific classes in Django."""
 
 HTML = "text/html"
-JSON = "text/plain" # "application/json"?
+JSON = "text/plain"  # "application/json"?
+
 
 class WrapperException(Exception):
     pass
 
+
 ###
 ### RequestGuts
 ###
+
 
 class RequestGuts(object):
     r"""The parts of an HttpRequest that we actually want the views to see.
@@ -47,11 +59,14 @@ class RequestGuts(object):
     >>> isinstance(rg.user, AnonymousUser)
     True
     """
+
     def __init__(self, request=None, user=None, session=None):
-        assert not (bool(request) and bool(user)), \
-            "The RequestGuts constructor may take a request or a user argument, but not both"
-        assert not (bool(request) and bool(session)), \
-            "The RequestGuts constructor may take a request or a session, but not both"
+        assert not (
+            bool(request) and bool(user)
+        ), "The RequestGuts constructor may take a request or a user argument, but not both"
+        assert not (
+            bool(request) and bool(session)
+        ), "The RequestGuts constructor may take a request or a session, but not both"
         if request:
             if request.method == "GET":
                 self.parameters = request.GET
@@ -62,7 +77,11 @@ class RequestGuts(object):
             self.files = request.FILES
             self.user = request.user
             self.session = request.session
-            self.client_ip = request.META.get('HTTP_X_FORWARDED_FOR', None) or request.META.get("REMOTE_ADDR", None) or "unknown ip"
+            self.client_ip = (
+                request.META.get('HTTP_X_FORWARDED_FOR', None)
+                or request.META.get("REMOTE_ADDR", None)
+                or "unknown ip"
+            )
         else:
             self.parameters = QueryDict("")
             self.files = MultiValueDict({})
@@ -77,8 +96,11 @@ class RequestGuts(object):
             self.client_ip = "[NOT_HTTP]"
 
     def _log(self, level, message):
-        logger.log(level, message, extra={"user": self.user.username,
-                                          "client_ip": self.client_ip})
+        logger.log(
+            level,
+            message,
+            extra={"user": self.user.username, "client_ip": self.client_ip},
+        )
 
     def log_debug(self, message):
         self._log(10, message)
@@ -100,9 +122,11 @@ class RequestGuts(object):
             self.method = method
             self.message = "Unhandled HTTP exception %s" % self.method
 
+
 ###
 ### ResponseSeed, its subclasses, and its collaborators
 ###
+
 
 class Encoder(json.JSONEncoder):
     """Custom class for encoding our objects to JSON.  By default any
@@ -112,6 +136,7 @@ class Encoder(json.JSONEncoder):
     JSON-serializable object, or an as_dict method that returns a
     JSON-serializable dict.  Note that right now there is no
     corresponding custom decoder."""
+
     def default(self, obj):
         if hasattr(obj, "to_json"):
             return obj.to_json
@@ -122,9 +147,11 @@ class Encoder(json.JSONEncoder):
         elif isinstance(obj, django.db.models.Model):
             return {"__model__": str(type(obj)), "pk": obj.pk}
         elif isinstance(obj, forms.Form):
-            result = {"valid": obj.is_valid(),
-                      "errors": obj.errors,
-                      "bound": obj.is_bound}
+            result = {
+                "valid": obj.is_valid(),
+                "errors": obj.errors,
+                "bound": obj.is_bound,
+            }
             if obj.is_valid():
                 result["data"] = obj.cleaned_data
             return result
@@ -135,8 +162,10 @@ class Encoder(json.JSONEncoder):
         print("*** Trouble encoding an object of type %r" % type(obj), file=sys.stderr)
         return json.JSONEncoder.default(self, obj)
 
+
 class ResponseSeed(object):
     """The parts of an HttpResponse that we trust views to create."""
+
     def sprout(self, context, request, format):
         if format == "html":
             return self.sprout_html(context, request)
@@ -156,8 +185,10 @@ class ResponseSeed(object):
             self.format = format
             self.message = "Cannot handle output format %s" % self.format
 
+
 class ErrorResponse(ResponseSeed):
     """Use for server errors."""
+
     def __init__(self, heading, message):
         """The heading and message may contain markup."""
         self.heading = heading
@@ -170,12 +201,15 @@ class ErrorResponse(ResponseSeed):
         return HttpResponseServerError(body, content_type=HTML)
 
     def sprout_json(self, context, request):
-        body = json.dumps({"error_heading": self.heading, "error_message": self.message},
-                          indent=2)
+        body = json.dumps(
+            {"error_heading": self.heading, "error_message": self.message}, indent=2
+        )
         return HttpResponseServerError(body, content_type=JSON)
+
 
 class NotFoundResponse(ResponseSeed):
     """Use for objects not found."""
+
     def __init__(self, message):
         """The message may contain markup."""
         self.message = message
@@ -190,9 +224,11 @@ class NotFoundResponse(ResponseSeed):
         body = json.dumps({"not_found_message": self.message})
         return HttpResponseNotFound(body, content_type=JSON)
 
+
 class ForbiddenResponse(ResponseSeed):
     """Use when a page or activity is forbidden, and when other layers,
     like the @login_required decorator, haven't caught the problem."""
+
     def __init__(self, message):
         """The message may contain markup."""
         self.message = message
@@ -207,9 +243,11 @@ class ForbiddenResponse(ResponseSeed):
         body = json.dumps({"forbidden_message": self.message})
         return HttpResponseForbidden(body, content_type=JSON)
 
+
 class DefaultResponse(ResponseSeed):
     """A response for representing JSON-serializable data where no
     template is available."""
+
     def __init__(self, data, status=200):
         self.data = data
         self.status = status
@@ -225,8 +263,10 @@ class DefaultResponse(ResponseSeed):
         body = json.dumps(self.data, cls=Encoder, indent=2)
         return HttpResponse(body, status=self.status, content_type=JSON)
 
+
 class AttachmentResponse(DefaultResponse):
     """A response for returning an attached file."""
+
     def __init__(self, name, content_type, contents):
         self.name = name
         self.content_type = content_type
@@ -238,17 +278,23 @@ class AttachmentResponse(DefaultResponse):
         return response
 
     def sprout_json(self, context, request):
-        body = json.dumps({"name": self.name,
-                           "content_type": self.content_type,
-                           "contents_in_base64": b64encode(self.contents)},
-                          indent=2)
+        body = json.dumps(
+            {
+                "name": self.name,
+                "content_type": self.content_type,
+                "contents_in_base64": b64encode(self.contents),
+            },
+            indent=2,
+        )
         return HttpResponse(body, content_type=JSON)
+
 
 class TemplateResponse(DefaultResponse):
     """A normal response involving data that can be sent to fill in a
     template.  Since the template is specific to HTML responses, when
     a JSON response is desired, this class is indistinguishable
     from DefaultResponse."""
+
     def __init__(self, template, data, status=200):
         self.data = data
         self.template = template
@@ -259,10 +305,12 @@ class TemplateResponse(DefaultResponse):
         body = self.template.render(context, request)
         return HttpResponse(body, status=self.status, content_type=HTML)
 
+
 class ModelResponse(DefaultResponse):
     """Returns a page representing a given Model object.  In HTML, if
     get_absolute_url is defined for that object, the user will be
     redirected there."""
+
     def __init__(self, model):
         self.model = model
 
@@ -273,9 +321,11 @@ class ModelResponse(DefaultResponse):
             other_seed = DefaultResponse(self.model)
             return other_seed.sprout(context, request, "html")
 
+
 class ViewResponse(ResponseSeed):
     """Returns the page associated with a given view;
     see the documentation for django.core.urlresolvers.reverse."""
+
     def __init__(self, view, *args, **kwargs):
         self.view = view
         self.args = args
@@ -285,9 +335,11 @@ class ViewResponse(ResponseSeed):
     def sprout(self, context, request, format):
         return HttpResponseRedirect(append_format(self.url, format))
 
+
 class RefererResponse(ResponseSeed):
     """Use this for cases where a page redirects to its referer.
     This is a common idiom when executing a POST, for example."""
+
     def sprout(self, context, request, format):
         if "referer" not in context:
             message = "This page should redirect back to its referring page, but the HTTP_REFERER metadata cannot be found."
@@ -295,6 +347,7 @@ class RefererResponse(ResponseSeed):
             other_seed.sprout(context, request, format)
         else:
             return HttpResponseRedirect(append_format(context["referer"], format))
+
 
 ###
 ### Wrapper
@@ -318,6 +371,7 @@ def append_format(url, format):
         new_query = query + "&" + new_parameter
     return urlunsplit((scheme, netloc, path, new_query, fragment))
 
+
 def dispatch_on_method(f, d):
     """Decorator that takes a function f, whose metadata will be
     passed through to the decorated function, and a dict mapping HTTP
@@ -334,6 +388,7 @@ def dispatch_on_method(f, d):
 
     I do not know what will happen if the values of d never invoke
     f."""
+
     @wraps(f)
     def g(request, *args, **kwargs):
         if request.method in d:
@@ -343,17 +398,23 @@ def dispatch_on_method(f, d):
             except Http404 as e:
                 seed = NotFoundResponse(e.message)
             except Exception as e:
-                log_message = "%s to %s raised %s: %s" % (request.method,
-                                                          request.path,
-                                                          type(e).__name__,
-                                                          str(e))
+                log_message = "%s to %s raised %s: %s" % (
+                    request.method,
+                    request.path,
+                    type(e).__name__,
+                    str(e),
+                )
                 guts.log_error(log_message)
                 raise
             format = guts.parameters.get("response_format", "html")
             context = {"referer": request.META.get("HTTP_REFERER", None)}
             response = seed.sprout(context, request, format)
             if response.status_code >= 400:
-                log_message = "%s to %s yields code %d" % (request.method, request.path, response.status_code)
+                log_message = "%s to %s yields code %d" % (
+                    request.method,
+                    request.path,
+                    response.status_code,
+                )
                 if hasattr(seed, "message"):
                     log_message += ": " + seed.message
                 if 400 <= response.status_code < 500:
@@ -363,39 +424,58 @@ def dispatch_on_method(f, d):
         else:
             response = HttpResponseNotAllowed(list(d.keys()))
         return response
+
     g.dispatcher = d
     return g
 
+
 def get(f):
-    return dispatch_on_method(f, {"GET": lambda guts, *args, **kwargs: f(guts, *args, **kwargs)})
+    return dispatch_on_method(
+        f, {"GET": lambda guts, *args, **kwargs: f(guts, *args, **kwargs)}
+    )
+
 
 def get_or_post(f):
-    return dispatch_on_method(f, {"GET": lambda guts, *args, **kwargs: f(True, guts, *args, **kwargs),
-                                  "POST": lambda guts, *args, **kwargs: f(False, guts, *args, **kwargs)})
+    return dispatch_on_method(
+        f,
+        {
+            "GET": lambda guts, *args, **kwargs: f(True, guts, *args, **kwargs),
+            "POST": lambda guts, *args, **kwargs: f(False, guts, *args, **kwargs),
+        },
+    )
+
+
 ###
 ### Convenience functions to use within tests.
 ###
 def fake_get(view, *args, **kwargs):
     return view.dispatcher["GET"](*args, **kwargs)
 
+
 def fake_post(view, *args, **kwargs):
     return view.dispatcher["POST"](*args, **kwargs)
+
 
 ###
 ### Smoke tests
 ###
 
+
 @get
 def smoke_test_1(guts):
     return DefaultResponse({"foo": ["bar", "baz"]})
 
+
 from django.template import Template
 from django.contrib.auth.decorators import login_required
+
 
 class WrapperSmokeTestForm(forms.Form):
     quux = forms.CharField(max_length=100)
 
-template = Template("""{% extends "base.html" %}
+
+template = Template(
+    """{% extends "base.html" %}
 {% block title %}Wrapper Smoke Test{% endblock %}
 {% block heading %}The Studly Quux says {{ quux|default:"nothing" }} to {{ user }}{% endblock %}
 {% block content %}
@@ -403,7 +483,9 @@ template = Template("""{% extends "base.html" %}
 {{ form.as_p }}
 <input type="submit" value="Speak!" />
 </form>
-{% endblock %}""")
+{% endblock %}"""
+)
+
 
 @login_required
 @get_or_post

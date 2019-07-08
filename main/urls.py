@@ -9,7 +9,11 @@ from main import wrapper
 app_name = 'main'
 
 urlpatterns = [
-    url(r'^project/(?P<project_id>\d+)/api/(?P<url>.*)$', project.project_api, name='project-api'),
+    url(
+        r'^project/(?P<project_id>\d+)/api/(?P<url>.*)$',
+        project.project_api,
+        name='project-api',
+    ),
     url(r'^task/(?P<task_id>\d+)/$', task.task_view, name='view-task'),
     url(r'^review/(?P<review_id>\d+)/$', task.task_review, name='view-review'),
     url(r'^review/$', task.task_adhoc_review, name='review'),
@@ -23,15 +27,27 @@ urlpatterns = [
     url(r'^projects-long/', overview.all_projects, name='all-project-list'),
     url(r'^project/(\d+)/$', overview.one_project, name='view-project'),
     url(r'^project/(\d+)/stats/$', project.project_stats, name='view-project-stats'),
-    url(r'^project/(\d+)/agreement/$', project.project_agreement, name='view-project-agreement'),
+    url(
+        r'^project/(\d+)/agreement/$',
+        project.project_agreement,
+        name='view-project-agreement',
+    ),
     url(r'^project/(\d+)/export/$', project.project_export, name='view-project-export'),
     url(r'^project/(\d+)/upload/', project.project_upload, name='view-project-upload'),
     url(r'^groups/', overview.all_groups, name='group-list'),
     url(r'^group/(\d+)/$', overview.one_group, name='view-group'),
     url(r'^users/', overview.all_users, name='user-list'),
     url(r'^user/([A-Za-z0-9@+._-]+)/$', overview.one_user, name='view-user'),
-    url(r'^user/([A-Za-z0-9@+._-]+)/responses/$', user.recent_responses, name='user-response-list'),
-    url(r'^user/([A-Za-z0-9@+._-]+)/results/$', user.recent_results, name='user-result-list'),
+    url(
+        r'^user/([A-Za-z0-9@+._-]+)/responses/$',
+        user.recent_responses,
+        name='user-response-list',
+    ),
+    url(
+        r'^user/([A-Za-z0-9@+._-]+)/results/$',
+        user.recent_results,
+        name='user-result-list',
+    ),
     url(r'^remerge/(\d+)/$', task.unmerge, name='remerge'),
     url(r'^wips/$', task.wip_review, name='wip-list'),
     url(r'^track/$', base.track_page_visit, name='track'),
@@ -41,8 +57,10 @@ for task_type in settings.TASK_TYPES:
     mod = __import__("main.types.%s" % task_type, None, None, ["urlpatterns"])
     if hasattr(mod, "urlpatterns"):
         urlpatterns += [
-            url("^project-type/%s/" % task_type.replace("_", "-"),
-             include("main.types." + task_type)),
+            url(
+                "^project-type/%s/" % task_type.replace("_", "-"),
+                include("main.types." + task_type),
+            )
         ]
 
 urlpatterns += [

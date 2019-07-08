@@ -6,8 +6,24 @@ from django.contrib.auth.models import User
 from django.core.urlresolvers import resolve, reverse
 from django.utils import timezone
 from django.template.loader import get_template
-from main.models import Task, WorkInProgress, Response, Result, Review, AutoReview, PageTrack, Announcement
-from main.wrapper import get, get_or_post, TemplateResponse, ViewResponse, ForbiddenResponse, RequestGuts
+from main.models import (
+    Task,
+    WorkInProgress,
+    Response,
+    Result,
+    Review,
+    AutoReview,
+    PageTrack,
+    Announcement,
+)
+from main.wrapper import (
+    get,
+    get_or_post,
+    TemplateResponse,
+    ViewResponse,
+    ForbiddenResponse,
+    RequestGuts,
+)
 from six.moves.urllib.parse import urlparse
 import sys
 from django.db import transaction
@@ -36,28 +52,35 @@ def home(guts):
     site_messages = Announcement.objects.filter(enabled=True)
     respondable_tasks = Task.objects.can_annotate(guts.user)
     resolvable_tasks = Task.objects.can_merge(guts.user)
-    recent_responses = Response.objects.filter(user=guts.user).order_by('-end_time')[0:5]
+    recent_responses = Response.objects.filter(user=guts.user).order_by('-end_time')[
+        0:5
+    ]
     recent_results = Result.objects.filter(user=guts.user).order_by('-end_time')[0:5]
     reviews = Review.objects.filter(complete=False, response__user=guts.user)
     if "visitable_pages" not in guts.session:
         guts.session["visitable_pages"] = visitable(guts.user)
     template = get_template("home.html")
-    return TemplateResponse(template, {'respondable_tasks': respondable_tasks,
-                                       'respondable_task_count': respondable_tasks.count(),
-                                       'resolvable_tasks': resolvable_tasks,
-                                       'resolvable_task_count': resolvable_tasks.count(),
-                                       'recent_responses': recent_responses,
-                                       'recent_results': recent_results,
-                                       'reviews': reviews,
-                                       "pages": guts.session["visitable_pages"],
-                                       "messages": site_messages})
-
+    return TemplateResponse(
+        template,
+        {
+            'respondable_tasks': respondable_tasks,
+            'respondable_task_count': respondable_tasks.count(),
+            'resolvable_tasks': resolvable_tasks,
+            'resolvable_task_count': resolvable_tasks.count(),
+            'recent_responses': recent_responses,
+            'recent_results': recent_results,
+            'reviews': reviews,
+            "pages": guts.session["visitable_pages"],
+            "messages": site_messages,
+        },
+    )
 
 
 def visitable(user):
     """Gather information about which pages this user can visit by
     filtering the PAGES variable."""
     guts = RequestGuts(user=user)
+
     def reverse_if_visitable(view_function_name):
         try:
             f = resolve(reverse(view_function_name)).func
@@ -67,27 +90,46 @@ def visitable(user):
             else:
                 return reverse(view_function_name)
         except Exception as E:
-            return None # If a view throws an exception because it's not configured, don't throw errors on the homepage
-    visitable_pages = [{"category": category,
-                        "url": reverse_if_visitable(view_function),
-                        "description": description}
-                       for category, view_function, description in PAGES
-                       if reverse_if_visitable(view_function)]
+            return (
+                None
+            )  # If a view throws an exception because it's not configured, don't throw errors on the homepage
+
+    visitable_pages = [
+        {
+            "category": category,
+            "url": reverse_if_visitable(view_function),
+            "description": description,
+        }
+        for category, view_function, description in PAGES
+        if reverse_if_visitable(view_function)
+    ]
     ## we shouldn't do the "try visiting this page" hack for the next_task page,
     ## since (a) this should always be accessible, and (b) visiting the page will
     ## cause a WIP to be assigned to the user as a side effect.
-    visitable_pages.insert(0, {"category": "Tasks",
-                               "url": reverse('main:next-task'),
-                               "description": "Take next task"})
+    visitable_pages.insert(
+        0,
+        {
+            "category": "Tasks",
+            "url": reverse('main:next-task'),
+            "description": "Take next task",
+        },
+    )
     ## hack to include the admin site
     if user.is_staff:
-        visitable_pages.append({"category": "Miscellaneous",
-                                "url": "/admin/",
-                                "description": "Administer the site"})
-    visitable_pages.append({
-        "category":"Overviews", 
-        "url": "/user/%s/responses/" % guts.user.username,
-        "description": "Recently Merged Responses"})
+        visitable_pages.append(
+            {
+                "category": "Miscellaneous",
+                "url": "/admin/",
+                "description": "Administer the site",
+            }
+        )
+    visitable_pages.append(
+        {
+            "category": "Overviews",
+            "url": "/user/%s/responses/" % guts.user.username,
+            "description": "Recently Merged Responses",
+        }
+    )
     return visitable_pages
 
 
@@ -96,6 +138,7 @@ def about(guts):
     """Manage the display of the homepage"""
     template = get_template("about.html")
     return TemplateResponse(template, {})
+
 
 @transaction.atomic
 @login_required
@@ -124,22 +167,23 @@ def next_task(guts):
     if review.count():
         return ViewResponse('main:next-review')
 
-    auto_review_pending = AutoReview.objects.filter(user=guts.user,
-                                                    start_time__isnull=False,
-                                                    end_time__isnull=True)
+    auto_review_pending = AutoReview.objects.filter(
+        user=guts.user, start_time__isnull=False, end_time__isnull=True
+    )
     if auto_review_pending.exists():
-        return ViewResponse('main:view-task',
-                            auto_review_pending[0].task.id)
+        return ViewResponse('main:view-task', auto_review_pending[0].task.id)
     new_auto_reviews = AutoReview.objects.filter(
-        user=guts.user, task__project__priority__gte=0,
-        start_time__isnull=True, end_time__isnull=True).order_by("-task__project__priority")
+        user=guts.user,
+        task__project__priority__gte=0,
+        start_time__isnull=True,
+        end_time__isnull=True,
+    ).order_by("-task__project__priority")
     if new_auto_reviews.exists():
         auto_review = new_auto_reviews[0]
         auto_review.start_time = timezone.now()
         auto_review.full_clean()
         auto_review.save()
-        return ViewResponse('main:view-task',
-                            auto_review.task.id)
+        return ViewResponse('main:view-task', auto_review.task.id)
 
     wip = None
     wips = WorkInProgress.objects.filter(user=guts.user)
@@ -159,6 +203,7 @@ def next_task(guts):
     else:
         return ViewResponse('main:home')
 
+
 ## TODO: Needs testing.
 ## TODO: This code assumes that each user may only have one WIP.
 ##       The model should enforce that, or the view and template
@@ -174,16 +219,17 @@ def abandon_wip(get, guts):
     if get:
         wips = WorkInProgress.objects.filter(user=guts.user)
         template = get_template("abandon_wip.html")
-        return TemplateResponse(template, {'wips':wips})
+        return TemplateResponse(template, {'wips': wips})
     else:
         wips = WorkInProgress.objects.filter(user=guts.user)
         if wips.count():
             wip = wips[0]
             wip.delete()
             return ViewResponse('main:home')
-        else: 
+        else:
             template = get_template("abandon_wip.html")
             return TemplateResponse(template, {"wips": wips})
+
 
 class PageTrackForm(forms.Form):
     user = forms.ModelChoiceField(queryset=User.objects.order_by("username"))
@@ -191,8 +237,11 @@ class PageTrackForm(forms.Form):
     focus_time = forms.DateTimeField()
     blur_time = forms.DateTimeField(required=False)
 
+
 from django.template import Template
-page_track_template = Template("""{% extends "base.html" %}
+
+page_track_template = Template(
+    """{% extends "base.html" %}
 {% block title %}Page Track Test (ADMINS ONLY!){% endblock %}
 {% block heading %}Page Track Test (ADMINS ONLY!){% endblock %}
 {% block content %}
@@ -203,7 +252,9 @@ page_track_template = Template("""{% extends "base.html" %}
   {{ form.as_p }}
   <input type="submit" value="Submit fake page-tracking info" />
 </form>
-{% endblock %}""")
+{% endblock %}"""
+)
+
 
 @login_required
 @get_or_post
@@ -218,22 +269,26 @@ def track_page_visit(get, guts):
                 url = form.cleaned_data["url"]
                 view, view_args, view_kwargs = resolve(urlparse(url).path)
                 print(repr(form.cleaned_data), file=sys.stderr)
-                pt = PageTrack(user=form.cleaned_data["user"],
-                               view_name=view.__name__,
-                               view_args=repr(view_args),
-                               view_kwargs=repr(view_kwargs),
-                               focus_time=form.cleaned_data["focus_time"])
+                pt = PageTrack(
+                    user=form.cleaned_data["user"],
+                    view_name=view.__name__,
+                    view_args=repr(view_args),
+                    view_kwargs=repr(view_kwargs),
+                    focus_time=form.cleaned_data["focus_time"],
+                )
                 if "blur_time" in form.cleaned_data:
                     pt.blur_time = form.cleaned_data["blur_time"]
                 pt.full_clean()
                 pt.save()
                 new_form = PageTrackForm()
-                return TemplateResponse(page_track_template, {"form": new_form,
-                                                              "pt": pt})
+                return TemplateResponse(
+                    page_track_template, {"form": new_form, "pt": pt}
+                )
             else:
                 return TemplateResponse(page_track_template, {"form": form})
         else:
             return ForbiddenResponse("Only superusers may use this form.")
+
 
 ### These are the pages that might be shown in the sitemap.
 ### They must all be accessible to at least some users without parameters or URL variations.

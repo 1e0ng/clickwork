@@ -19,18 +19,21 @@ import sys
 import user_management.views
 from six.moves import range
 
+
 class NeedsFreshEyesSetup(TestCase):
     def login_as(self, username):
         """Have the Web client log in with the given username,
         assuming that the password is the same as the username, and
         signal a test failure if the login is unsuccessful."""
-        self.assert_(self.client.login(username=username, password=username),
-                     "Login as " + username + " failed")
+        self.assert_(
+            self.client.login(username=username, password=username),
+            "Login as " + username + " failed",
+        )
 
     def set_up_users(self):
-        superuser = User.objects.create_user("superuser",
-                                             "super@example.com",
-                                             "superuser")
+        superuser = User.objects.create_user(
+            "superuser", "super@example.com", "superuser"
+        )
         superuser.is_superuser = True
         superuser.is_staff = True
         superuser.save()
@@ -39,10 +42,12 @@ class NeedsFreshEyesSetup(TestCase):
         expectation = ViewExpectation(Conditions.null(), new_user_target)
         for name in ("alice", "bob", "carol", "dave"):
             ## Test creation of the account.
-            input_context = {"username": name,
-                             "first_name": name.capitalize(),
-                             "last_name": "Example",
-                             "email": "%s@example.com" % name}
+            input_context = {
+                "username": name,
+                "first_name": name.capitalize(),
+                "last_name": "Example",
+                "email": "%s@example.com" % name,
+            }
             expectation.check(self, input_context)
             ## Park the corresponding User object as an attribute, and
             ## reset its (randomly-generated) password,
@@ -67,28 +72,35 @@ class NeedsFreshEyesSetup(TestCase):
 
     @property
     def quiz(self):
-        return {"What is your name?":
-                    {self.bob:   "Sir Launcelot of Camelot",
-                     self.carol: "Sir Galahad of Camelot",
-                     self.dave:  "Arthur, King of the Britons"},
-                "What is your quest?":
-                    {self.bob:   "To seek the Holy Grail",
-                     self.carol: "To seek the Holy Grail",
-                     self.dave:  "To seek the Holy Grail"},
-                "What is your favorite colour?":
-                    {self.bob:   "Blue",
-                     self.carol: "Yellow",
-                     self.dave:  "An African or a European colour?"}}
+        return {
+            "What is your name?": {
+                self.bob: "Sir Launcelot of Camelot",
+                self.carol: "Sir Galahad of Camelot",
+                self.dave: "Arthur, King of the Britons",
+            },
+            "What is your quest?": {
+                self.bob: "To seek the Holy Grail",
+                self.carol: "To seek the Holy Grail",
+                self.dave: "To seek the Holy Grail",
+            },
+            "What is your favorite colour?": {
+                self.bob: "Blue",
+                self.carol: "Yellow",
+                self.dave: "An African or a European colour?",
+            },
+        }
 
     def initialize_project(self):
         t = type_list[self.project_type].project
-        self.project = t.objects.create(title=self.project_title,
-                                        type=self.project_type,
-                                        admin=self.alice,
-                                        annotator_count=2,
-                                        needs_fresh_eyes=True,
-                                        priority=1,
-                                        description="A test project")
+        self.project = t.objects.create(
+            title=self.project_title,
+            type=self.project_type,
+            admin=self.alice,
+            annotator_count=2,
+            needs_fresh_eyes=True,
+            priority=1,
+            description="A test project",
+        )
         self.project.annotators.add(self.taggers_and_mergers)
         self.project.save()
 
@@ -96,8 +108,9 @@ class NeedsFreshEyesSetup(TestCase):
         f = SimpleUploadedFile("questions", "\n".join(list(self.quiz.keys())))
         f.open("rb")
         context = {"action": "Upload", "upload": f}
-        target = WebTarget("POST", main.views.project.project_upload,
-                           args=(self.project.id,))
+        target = WebTarget(
+            "POST", main.views.project.project_upload, args=(self.project.id,)
+        )
         expectation = ViewExpectation(Conditions.null(), target)
         expectation.check(self, context)
 
@@ -106,25 +119,34 @@ class NeedsFreshEyesSetup(TestCase):
         for i in range(2):
             for user in (self.bob, self.carol, self.dave):
                 self.login_as(user.username)
-                next_task_target = WebTarget("GET", main.views.base.next_task,
-                                             final_views=(main.views.task.task_view,))
-                next_task_expectation = ViewExpectation(Conditions.null(),
-                                                        next_task_target)
+                next_task_target = WebTarget(
+                    "GET",
+                    main.views.base.next_task,
+                    final_views=(main.views.task.task_view,),
+                )
+                next_task_expectation = ViewExpectation(
+                    Conditions.null(), next_task_target
+                )
                 output_context = next_task_expectation.check(self)
                 question = output_context["question"]
-                answer_input_context = {"answer": self.quiz[question][user],
-                                        "comment": "generated in testing"}
-                answer_target = WebTarget("POST", main.views.task.task_view,
-                                          (output_context["task"]["id"],),
-                                          final_views=(main.views.task.task_view,
-                                                       main.views.base.home))
+                answer_input_context = {
+                    "answer": self.quiz[question][user],
+                    "comment": "generated in testing",
+                }
+                answer_target = WebTarget(
+                    "POST",
+                    main.views.task.task_view,
+                    (output_context["task"]["id"],),
+                    final_views=(main.views.task.task_view, main.views.base.home),
+                )
                 answer_expectation = ViewExpectation(Conditions.null(), answer_target)
                 answer_expectation.check(self, answer_input_context)
                 print("User", user.username, "answered", question, file=sys.stderr)
                 ## At this point the user is holding a WIP for the third task,
                 ## but we want that WIP to be released.
-                abandon_target = WebTarget("POST", main.views.base.abandon_wip,
-                                           statuses=(302, 200))
+                abandon_target = WebTarget(
+                    "POST", main.views.base.abandon_wip, statuses=(302, 200)
+                )
                 abandon_expectation = ViewExpectation(Conditions.null(), abandon_target)
                 abandon_expectation.check(self)
 
@@ -135,8 +157,14 @@ class NeedsFreshEyesSetup(TestCase):
         self.tag_project()
         self.project.mergers.add(self.taggers_and_mergers)
         old_stdout = sys.stdout
-        fixture_file = os.path.join(settings.BASE_PATH, "main", "fixtures", "fresh_eyes.json")
+        fixture_file = os.path.join(
+            settings.BASE_PATH, "main", "fixtures", "fresh_eyes.json"
+        )
         sys.stdout = open(fixture_file, "wb")
-        call_command("dumpdata", indent=2, natural=True, exclude=["contenttypes.contenttype",
-                                                                  "auth.permission"])
+        call_command(
+            "dumpdata",
+            indent=2,
+            natural=True,
+            exclude=["contenttypes.contenttype", "auth.permission"],
+        )
         sys.stdout = old_stdout

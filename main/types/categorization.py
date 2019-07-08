@@ -4,6 +4,7 @@ from main.models import Task, Response, Project, ProjectType
 import csv
 from io import StringIO
 
+
 class CategorizationProject(Project):
     def handle_input(self, input):
         f = StringIO(input.encode("utf-8"))
@@ -22,15 +23,19 @@ class CategorizationProject(Project):
             ct.full_clean()
             ct.save()
 
-class CategorizationInput(models.Model):   
+
+class CategorizationInput(models.Model):
     class Meta:
         app_label = "main"
+
     query_string = models.CharField(max_length=255)
+
 
 class CategorizationTask(Task):
     class Meta:
         app_label = "main"
-    queries = models.ManyToManyField(CategorizationInput) 
+
+    queries = models.ManyToManyField(CategorizationInput)
 
     @property
     def tagging_template(self):
@@ -45,19 +50,23 @@ class CategorizationTask(Task):
         return {'queries': queries}
 
     def handle_response(self, guts, **kwargs):
-        response = CategorizationResponse(category="", comment="", order="") 
+        response = CategorizationResponse(category="", comment="", order="")
         return response
 
+
 class CategorizationResponse(Response):
-     class Meta:
+    class Meta:
         app_label = "main"
-     category = models.CharField(max_length=255)
-     comment = models.TextField()
-     order = models.IntegerField()
+
+    category = models.CharField(max_length=255)
+    comment = models.TextField()
+    order = models.IntegerField()
+
 
 models.loading.register_models("main", CategorizationInput)
 models.loading.register_models("main", CategorizationTask)
 models.loading.register_models("main", CategorizationResponse)
+
 
 class Categorization(ProjectType):
     # A string, must be unique across the install
@@ -70,6 +79,7 @@ class Categorization(ProjectType):
             return model.categorizationproject
         else:
             return model
+
 
 def get_type():
     return Categorization()

@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from django.conf import settings
+
 registered_types = settings.TASK_TYPES
 
 type_list = {}

@@ -5,6 +5,7 @@ from django.db import models
 import csv
 from io import StringIO
 
+
 class SimpleProject(Project):
     class Meta:
         proxy = True
@@ -17,37 +18,43 @@ class SimpleProject(Project):
             task.full_clean()
             task.save()
 
+
 class SimpleTask(Task):
     """A basic task, with just a single textfield for
        input."""
+
     class Meta:
         app_label = "main"
+
     question = models.TextField()
-    
-    #: The Tagging template is the template which is 
+
+    #: The Tagging template is the template which is
     #: used for tagging. The data which is used in the
     #: tagging template is provided by the tagging_template_input
     #: function.
     @property
     def tagging_template(self):
         return "tasks/simple_annotator.html"
+
     @property
     def merging_template(self):
         return "tasks/simple_merger.html"
-        
+
     def tagging_template_input(self):
         """Given a task, generate a dictionary of data
            to be passed to the tagging template."""
-        return {'question': self.question}   
+        return {'question': self.question}
 
     def merging_template_input(self):
         """Given a completed task, generate a dictionary of data
            to be passed to the merging template."""
         data = self.tagging_template_input()
-        data["responses"] = [{"answer": r.simpleresponse.answer, "comment": r.simpleresponse.comment}
-                             for r in self.response_set.all()]
+        data["responses"] = [
+            {"answer": r.simpleresponse.answer, "comment": r.simpleresponse.comment}
+            for r in self.response_set.all()
+        ]
         return data
-    
+
     def handle_response(self, guts, **kwargs):
         """Generate the appropriate subclass of Response or Result,
            given a RequestGuts object and a dict containing whatever
@@ -58,12 +65,20 @@ class SimpleTask(Task):
            saving it to the DB.
         """
         if kwargs["task"].completed:
-            res = SimpleResult(answer=guts.parameters['answer'], comment=guts.parameters['comment'], **kwargs)
+            res = SimpleResult(
+                answer=guts.parameters['answer'],
+                comment=guts.parameters['comment'],
+                **kwargs
+            )
         else:
-            res = SimpleResponse(answer=guts.parameters['answer'], comment=guts.parameters['comment'], **kwargs)
+            res = SimpleResponse(
+                answer=guts.parameters['answer'],
+                comment=guts.parameters['comment'],
+                **kwargs
+            )
         res.full_clean()
         res.save()
-    
+
     def export(self):
         """Generate a dictionary of key-value pairs for this task;
            the key should be a component of a filename, which will
@@ -83,25 +98,36 @@ class SimpleTask(Task):
         writer.writerow(['user', 'answer', 'comment'])
         for response in self.response_set.all():
             simple_res = response.simpleresponse
-            writer.writerow([response.user.username, simple_res.answer, simple_res.comment])
-        
+            writer.writerow(
+                [response.user.username, simple_res.answer, simple_res.comment]
+            )
+
         input_string.seek(0)
         response_string.seek(0)
 
-        return {'question.txt': input_string.read(), 'responses.csv': response_string.read()}   
+        return {
+            'question.txt': input_string.read(),
+            'responses.csv': response_string.read(),
+        }
+
 
 class SimpleResponse(Response):
     """Response to simple question; includes fields for
        answer (char) and comment (textarea)"""
+
     class Meta:
         app_label = "main"
+
     answer = models.CharField(max_length=255)
     comment = models.TextField(blank=True, null=True)
 
+
 class SimpleResult(Result):
     """Merged result for simple responses; answer + comment"""
+
     class Meta:
         app_label = "main"
+
     answer = models.CharField(max_length=255)
     comment = models.TextField(blank=True, null=True)
 
@@ -116,7 +142,7 @@ class Simple(ProjectType):
     def project(self):
         return SimpleProject
 
-    #: A string, to be used in the settings.TASK_TYPES 
+    #: A string, to be used in the settings.TASK_TYPES
     #: array and also used in the database to associate
     #: a project with a type.
     name = "simple"
@@ -128,7 +154,8 @@ class Simple(ProjectType):
             return SimpleProject.objects.get(pk=model.id)
         else:
             return model
-                
+
+
 def get_type():
     """Return the type for the simple project."""
     return Simple()

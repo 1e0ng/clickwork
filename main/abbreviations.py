@@ -186,8 +186,8 @@ LANGUAGE_CODES = {
     "yo": "Yoruba",
     "za": "Zhuang",
     "zh": "Chinese",
-    "zu": "Zulu"
-    }
+    "zu": "Zulu",
+}
 
 COUNTRY_CODES = {
     "AF": "Afghanistan",
@@ -433,4 +433,4 @@ COUNTRY_CODES = {
     "YE": "Yemen",
     "ZM": "Zambia",
     "ZW": "Zimbabwe",
-    }
+}

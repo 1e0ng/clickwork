@@ -3,9 +3,12 @@
 
 from __future__ import absolute_import
 import datetime
-import sys
 from main.models import Response, Result
-from main.wrapper import get, DefaultResponse, ErrorResponse, ForbiddenResponse, TemplateResponse
+from main.wrapper import (
+    get,
+    ForbiddenResponse,
+    TemplateResponse,
+)
 from django import forms
 from django.utils import timezone
 from django.contrib.auth.models import User, Group
@@ -15,6 +18,7 @@ import six
 
 ### TODO: Replace usages of "tagging"/"merging" and "week"/"month" throughout
 ### with type-safe enums.
+
 
 class TimeBlockSpec(object):
     """Describes what kind of TimeBlock objects should be used in a
@@ -47,11 +51,16 @@ class TimeBlockSpec(object):
     >>> [str(block) for block in tbs3]
     ['week 52 of 2009', 'week 53 of 2009']
 """
+
     class BadResolution(ValueError):
         def __init__(self, resolution):
             self.resolution = resolution
+
         def __str__(self):
-            return "TimeBlockSpec resolution must be 'week' or 'month', not '%s'" % self.resolution
+            return (
+                "TimeBlockSpec resolution must be 'week' or 'month', not '%s'"
+                % self.resolution
+            )
 
     class TimeBlock(object):
         """Nested class for the TimeBlock objects themselves.
@@ -76,6 +85,7 @@ class TimeBlockSpec(object):
         >>> b4.successor() == b5
         True
         """
+
         def __init__(self, spec, year, unit):
             self.spec = spec
             self.year = year
@@ -88,7 +98,9 @@ class TimeBlockSpec(object):
             if self.spec.resolution == "month":
                 return datetime.datetime(self.year, self.unit, 1)
             elif self.spec.resolution == "week":
-                return datetime.datetime.strptime("%d-W%d-1" % (self.year, self.unit), "%Y-W%W-%w")
+                return datetime.datetime.strptime(
+                    "%d-W%d-1" % (self.year, self.unit), "%Y-W%W-%w"
+                )
 
         def right_edge(self):
             """Return the datetime object representing the earliest
@@ -113,8 +125,10 @@ class TimeBlockSpec(object):
             elif self.spec.resolution == "week":
                 ## According to Wikipedia s.v. "ISO week date", a year has 53 ISO weeks
                 ## iff January 1 and/or December 31 of that year is on Thursday.
-                if datetime.datetime(self.year, 1, 1).isoweekday() == 4 or \
-                        datetime.datetime(self.year, 12, 31).isoweekday() == 4:
+                if (
+                    datetime.datetime(self.year, 1, 1).isoweekday() == 4
+                    or datetime.datetime(self.year, 12, 31).isoweekday() == 4
+                ):
                     max_week = 53
                 else:
                     max_week = 52
@@ -126,8 +140,10 @@ class TimeBlockSpec(object):
                     next_unit = self.unit + 1
             else:
                 raise self.BadResolution(self.spec.resolution)
-            if check_boundaries and ((next_year, next_unit) >
-                                     (self.spec.latest_block.year, self.spec.latest_block.unit)):
+            if check_boundaries and (
+                (next_year, next_unit)
+                > (self.spec.latest_block.year, self.spec.latest_block.unit)
+            ):
                 return None
             else:
                 return type(self)(self.spec, next_year, next_unit)
@@ -148,12 +164,18 @@ class TimeBlockSpec(object):
         self.periods = periods
         self.latest_block = self.block_containing(latest_block_contains, False)
         if resolution == "week":
-            earliest_block_contains = latest_block_contains - datetime.timedelta(weeks=periods)
+            earliest_block_contains = latest_block_contains - datetime.timedelta(
+                weeks=periods
+            )
         elif resolution == "month":
-            original_total_months = (latest_block_contains.year * 12) + (latest_block_contains.month - 1)
+            original_total_months = (latest_block_contains.year * 12) + (
+                latest_block_contains.month - 1
+            )
             new_total_months = original_total_months - periods
             (new_year, new_month_zero_based) = divmod(new_total_months, 12)
-            earliest_block_contains = latest_block_contains.replace(year=new_year, month=new_month_zero_based + 1)
+            earliest_block_contains = latest_block_contains.replace(
+                year=new_year, month=new_month_zero_based + 1
+            )
         else:
             raise self.BadResolution(resolution)
         self.earliest_block = self.block_containing(earliest_block_contains, False)
@@ -167,13 +189,30 @@ class TimeBlockSpec(object):
             ## and the while loop will terminate.
 
     def __eq__(self, other):
-        return (self.resolution, self.periods, self.latest_block.year, self.latest_block.unit) == \
-            (other.resolution, other.periods, other.latest_block.year, self.latest_block.unit)
+        return (
+            self.resolution,
+            self.periods,
+            self.latest_block.year,
+            self.latest_block.unit,
+        ) == (
+            other.resolution,
+            other.periods,
+            other.latest_block.year,
+            self.latest_block.unit,
+        )
+
     def __ne__(self, other):
         return not (self == other)
 
     def __hash__(self):
-        return hash((self.resolution, self.periods, self.latest_block.year, self.latest_block.unit))
+        return hash(
+            (
+                self.resolution,
+                self.periods,
+                self.latest_block.year,
+                self.latest_block.unit,
+            )
+        )
 
     def block_containing(self, dt, check_boundaries=True):
         """If dt, which must be a datetime object, is within the
@@ -187,14 +226,18 @@ class TimeBlockSpec(object):
             result = self.TimeBlock(self, iso_year, iso_week)
         elif self.resolution == "month":
             result = self.TimeBlock(self, dt.year, dt.month)
-        if check_boundaries and (result < self.earliest_block or result > self.latest_block):
+        if check_boundaries and (
+            result < self.earliest_block or result > self.latest_block
+        ):
             return None
         else:
             return result
 
+
 class TaskDataPoint(object):
     """Represents the time that a particular user spent
     working on a particular task, binned into a certain TaskBlock."""
+
     def __init__(self, uid, block, task_type, tag_or_merge, work_time):
         ## This constructor is called from the TimeChart constructor below,
         ## and in that code, the user is represented by a UID rather than a
@@ -207,13 +250,16 @@ class TaskDataPoint(object):
         self.tag_or_merge = tag_or_merge
         self.work_time = work_time
 
+
 class TaskDataSet(object):
     """Aggregates information from a set of TaskDataPoint objects to
     get the average and median times spent tagging and merging."""
+
     def __init__(self, points, task_type):
         """The 'points' argument must be a non-empty iterable containing TaskDataPoint objects,
         and the 'task_type' argument must be either 'tagging' or 'merging'."""
         self.task_type = task_type
+
         def median(xs):
             ordered = sorted(list(xs))
             magnitude = len(xs)
@@ -222,6 +268,7 @@ class TaskDataSet(object):
                 return ordered[magnitude / 2]
             else:
                 return (ordered[magnitude / 2 - 1] + ordered[magnitude / 2]) / 2.0
+
         tag_point_time = [p.work_time for p in points if p.tag_or_merge == "tagging"]
         merge_point_time = [p.work_time for p in points if p.tag_or_merge == "merging"]
         self.work_time = sum(tag_point_time) + sum(merge_point_time)
@@ -248,9 +295,11 @@ class TaskDataSet(object):
             result["merging_time_median"] = self.merging_time_median
         return result
 
+
 class TaskBin(object):
     """Aggregates information about all the tasks, of various types,
     that one user does within one time block."""
+
     def __init__(self, user, block, points):
         self.user = user
         self.block = block
@@ -261,13 +310,17 @@ class TaskBin(object):
                 points_by_type[tt].add(point)
             else:
                 points_by_type[tt] = set([point])
-        self.data_sets = [TaskDataSet(points_by_type[tt], tt)
-                          for tt in sorted(points_by_type.keys())]
+        self.data_sets = [
+            TaskDataSet(points_by_type[tt], tt) for tt in sorted(points_by_type.keys())
+        ]
         self.work_time = sum([tds.work_time for tds in self.data_sets])
 
     def as_dict(self):
-        return {"work_time": self.work_time,
-                "data_sets": [ds.as_dict() for ds in self.data_sets]}
+        return {
+            "work_time": self.work_time,
+            "data_sets": [ds.as_dict() for ds in self.data_sets],
+        }
+
 
 class TimeChart(object):
     """Generates a report on clickwork usage based on the given spec.
@@ -276,17 +329,24 @@ class TimeChart(object):
     'report' attribute is a two-level dict, where
     tc.report[uid][block] is a TaskBin of information regarding what
     the given user did during the given time block."""
+
     def __init__(self, spec, users):
         def value_to_point(value, tag_or_merge):
             """Translates a value-dict generated from the queries
             below into a TaskDataPoint object."""
             block = spec.block_containing(value["end_time"])
             if block:
-                return TaskDataPoint(value["user"], block, value["project_type"],
-                                     tag_or_merge, value["seconds"])
+                return TaskDataPoint(
+                    value["user"],
+                    block,
+                    value["project_type"],
+                    tag_or_merge,
+                    value["seconds"],
+                )
             else:
                 ## The end_time must be outside the boundaries of the spec.
                 return None
+
         def generate_points():
             ## For date-mangling we need to use PostgreSQL-specific functions.
             ## SQLite WILL BREAK on these.
@@ -297,17 +357,28 @@ class TimeChart(object):
                     y = "isoyear"
                 else:
                     y = "year"
-                select_arg = {"seconds": "extract(epoch from end_time - start_time)",
-                              "project_type": "main_project.type"}
-                qs = klass.objects.extra(select=select_arg, tables=["main_task", "main_project"],
-                                         where=["task_id = main_task.id", "main_task.project_id = main_project.id"]
-                                         ).filter(end_time__gte=spec.earliest_block.left_edge(),
-                                                  end_time__lt=spec.latest_block.right_edge(),
-                                                  user__in=users).values("user",
-                                                                         "project_type",
-                                                                         "seconds",
-                                                                         "end_time")
+                select_arg = {
+                    "seconds": "extract(epoch from end_time - start_time)",
+                    "project_type": "main_project.type",
+                }
+                qs = (
+                    klass.objects.extra(
+                        select=select_arg,
+                        tables=["main_task", "main_project"],
+                        where=[
+                            "task_id = main_task.id",
+                            "main_task.project_id = main_project.id",
+                        ],
+                    )
+                    .filter(
+                        end_time__gte=spec.earliest_block.left_edge(),
+                        end_time__lt=spec.latest_block.right_edge(),
+                        user__in=users,
+                    )
+                    .values("user", "project_type", "seconds", "end_time")
+                )
                 return qs
+
             for value in query_from(Response):
                 point = value_to_point(value, "tagging")
                 if point:
@@ -316,6 +387,7 @@ class TimeChart(object):
                 point = value_to_point(value, "merging")
                 if point:
                     yield point
+
         points_by_uid_and_block = {}
         for point in generate_points():
             uid = point.uid
@@ -335,29 +407,36 @@ class TimeChart(object):
             bins_by_uid_and_block[uid] = bins_by_block
         self.report = bins_by_uid_and_block
 
+
 class TimesheetForm(forms.Form):
-    users = forms.ModelMultipleChoiceField(queryset=User.objects.filter(is_active=True).order_by("username"),
-                                           required=False,
-                                           widget=forms.SelectMultiple(attrs={"size": 7}))
-    groups = forms.ModelMultipleChoiceField(queryset=Group.objects.all().order_by("name"),
-                                            required=False,
-                                            widget=forms.SelectMultiple(attrs={"size": 7}))
-    periods = forms.IntegerField(max_value=12,
-                                 initial="3",
-                                 # try to make this an HTML5 number form field
-                                 widget=forms.TextInput(attrs={"type": "number",
-                                                               "min": "1",
-                                                               "max": "12",
-                                                               "step": "1"}))
-    resolution = forms.ChoiceField(choices=(("week", "weeks"),
-                                            ("month", "months")),
-                                   initial="week")
+    users = forms.ModelMultipleChoiceField(
+        queryset=User.objects.filter(is_active=True).order_by("username"),
+        required=False,
+        widget=forms.SelectMultiple(attrs={"size": 7}),
+    )
+    groups = forms.ModelMultipleChoiceField(
+        queryset=Group.objects.all().order_by("name"),
+        required=False,
+        widget=forms.SelectMultiple(attrs={"size": 7}),
+    )
+    periods = forms.IntegerField(
+        max_value=12,
+        initial="3",
+        # try to make this an HTML5 number form field
+        widget=forms.TextInput(
+            attrs={"type": "number", "min": "1", "max": "12", "step": "1"}
+        ),
+    )
+    resolution = forms.ChoiceField(
+        choices=(("week", "weeks"), ("month", "months")), initial="week"
+    )
     ending_date = forms.DateField(initial=datetime.date.today())
 
     def clean(self):
         if not (self.cleaned_data["users"] or self.cleaned_data["groups"]):
             raise forms.ValidationError("You must select at least one user or group.")
         return self.cleaned_data
+
 
 @login_required
 @get
@@ -366,15 +445,16 @@ def timesheet(guts):
     then translate it into a viewable format."""
     if guts.user.is_staff:
         template = get_template("timesheet.html")
-        if all([p in guts.parameters for p in ("resolution", "periods", "ending_date")]):
+        if all(
+            [p in guts.parameters for p in ("resolution", "periods", "ending_date")]
+        ):
             form = TimesheetForm(guts.parameters)
         else:
             form = TimesheetForm()
         if form.is_bound and form.is_valid():
             resolution = form.cleaned_data["resolution"]
             periods = form.cleaned_data["periods"]
-            spec = TimeBlockSpec(resolution, periods,
-                                 form.cleaned_data["ending_date"])
+            spec = TimeBlockSpec(resolution, periods, form.cleaned_data["ending_date"])
             users = set(form.cleaned_data["users"])
             for group in form.cleaned_data["groups"]:
                 for user in group.user_set.all():
@@ -391,11 +471,16 @@ def timesheet(guts):
                         cells.append({"data_sets": [], "work_time": 0})
                 rows.append({"user": user.username, "cells": cells})
             headers = [str(block) for block in spec]
-            return TemplateResponse(template, {"form": form, "headers": headers,
-                                               "rows": sorted(rows,
-                                                              key=lambda r: r["user"]),
-                                               "resolution": resolution,
-                                               "periods": periods})
+            return TemplateResponse(
+                template,
+                {
+                    "form": form,
+                    "headers": headers,
+                    "rows": sorted(rows, key=lambda r: r["user"]),
+                    "resolution": resolution,
+                    "periods": periods,
+                },
+            )
         else:
             return TemplateResponse(template, {"form": form})
     else:

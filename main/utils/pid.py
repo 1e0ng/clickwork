@@ -6,10 +6,12 @@ from __future__ import absolute_import
 import fcntl
 import os
 
+
 class PidFile(object):
     """Context manager that locks a pid file.  Implemented as class
     not generator because daemon.py is calling .__exit__() with no parameters
     instead of the None, None, None specified by PEP-343."""
+
     # pylint: disable=R0903
 
     def __init__(self, path):
@@ -37,4 +39,3 @@ class PidFile(object):
             if err.errno != 9:
                 raise
         os.remove(self.path)
-

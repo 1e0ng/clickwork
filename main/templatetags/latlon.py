@@ -3,6 +3,7 @@ from django import template
 
 register = template.Library()
 
+
 def as_dms(f_degrees):
     """Given a floating-point number of degrees, translates it to
     degrees, minutes, and seconds."""
@@ -15,16 +16,22 @@ def as_dms(f_degrees):
     seconds = int(f_seconds)
     return u"%d\u00b0%02d'%02d\"" % (degrees, minutes, seconds)
 
+
 @register.filter
 def lat(f_degrees):
     abs_degrees = abs(f_degrees)
     sign = int(f_degrees / abs_degrees)
     return as_dms(abs_degrees) + ["", "N", "S"][sign]
+
+
 lat.is_safe = True
+
 
 @register.filter
 def lon(f_degrees):
     abs_degrees = abs(f_degrees)
     sign = int(f_degrees / abs_degrees)
     return as_dms(abs_degrees) + ["", "E", "W"][sign]
+
+
 lon.is_safe = True

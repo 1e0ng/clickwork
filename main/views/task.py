@@ -1,11 +1,25 @@
 from __future__ import absolute_import
 from django.shortcuts import get_object_or_404
-from main.models import Project, Task, WorkInProgress, Response, User, Review, AutoReview
+from main.models import (
+    Project,
+    Task,
+    WorkInProgress,
+    Response,
+    User,
+    Review,
+    AutoReview,
+)
 from main.types import type_list
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from main.helpers import get_project_type
-from main.wrapper import get, get_or_post, TemplateResponse, ViewResponse, ForbiddenResponse
+from main.wrapper import (
+    get,
+    get_or_post,
+    TemplateResponse,
+    ViewResponse,
+    ForbiddenResponse,
+)
 from django.template.loader import get_template
 from django.utils.datastructures import MultiValueDictKeyError
 import sys
@@ -20,6 +34,7 @@ def task_view(get, guts, task_id):
     case, this should dispatch appropriately based on the task's
     type."""
     import main.views.base
+
     task = Task.objects.get(pk=task_id)
     project_type = type_list[task.project.type]
     task = project_type.cast(task)
@@ -39,17 +54,19 @@ def task_view(get, guts, task_id):
                     ## If the Task subclass has not been retrofitted to handle
                     ## auto-review projects, then this line will throw an exception
                     ## "TypeError: ... unexpected keyword argument 'auto_review_user'"
-                    return TemplateResponse(task.template(),
-                                            task.template_data(auto_review_user=guts.user))
+                    return TemplateResponse(
+                        task.template(), task.template_data(auto_review_user=guts.user)
+                    )
                 else:
                     ## NOTE: does the downcasting of task screw this query up?
-                    response_query = Response.objects.filter(user=guts.user,
-                                                             task=task)
+                    response_query = Response.objects.filter(user=guts.user, task=task)
                     if not response_query.exists():
                         ## No response?  Ask the task to make one!
-                        kwargs = {"user": guts.user,
-                                  "task": task,
-                                  "start_time": auto_review.start_time}
+                        kwargs = {
+                            "user": guts.user,
+                            "task": task,
+                            "start_time": auto_review.start_time,
+                        }
                         task.handle_response(guts, **kwargs)
                         ## (Note that this code path does NOT update the task's
                         ## completed_assignments field, because auto-review projects
@@ -70,15 +87,15 @@ def task_view(get, guts, task_id):
         ## an admin can look at any task, but not even an admin
         ## can submit a response or result to a task without getting a WIP first
         if not (task.viewable_by(guts.user) and get):
-            return ForbiddenResponse(u"You are not allowed to view %s" % six.text_type(task))
+            return ForbiddenResponse(
+                u"You are not allowed to view %s" % six.text_type(task)
+            )
     if get:
         return TemplateResponse(task.template(), task.template_data())
     else:
         ## TODO: if we successfully make handle_response a method of the task,
         ## then we don't have to pass the task in kwargs
-        kwargs = {"user": guts.user,
-                  "task": task,
-                  "start_time": wip.start_time}
+        kwargs = {"user": guts.user, "task": task, "start_time": wip.start_time}
         try:
             task.handle_response(guts, **kwargs)
             if task.completed:
@@ -87,7 +104,10 @@ def task_view(get, guts, task_id):
                     for user in users:
                         user_obj = User.objects.get(pk=user)
                         comment = guts.parameters.get("comment_%s" % user, "")
-                        rev = Review(response=task.response_set.get(user=user_obj), comment=comment)
+                        rev = Review(
+                            response=task.response_set.get(user=user_obj),
+                            comment=comment,
+                        )
                         rev.full_clean()
                         rev.save()
             else:
@@ -105,10 +125,15 @@ def task_view(get, guts, task_id):
             exc_type, exc_value, exc_traceback = sys.exc_info()
             tb_info = traceback.extract_tb(exc_traceback)
             template = get_template("parameter-error-in-task.html")
-            context = {"task": str(task), "params": params,
-                       "exc_value": exc_value, "traceback": tb_info}
+            context = {
+                "task": str(task),
+                "params": params,
+                "exc_value": exc_value,
+                "traceback": tb_info,
+            }
             guts.log_error("Bad form? " + repr(context))
             return TemplateResponse(template, context, status=500)
+
 
 @login_required
 @get
@@ -116,11 +141,13 @@ def next_review(guts):
     """If a user has an outstanding task to review, redirect them to it.
        Otherwise, redirect them to the homepage."""
     import main.views.base
+
     review = Review.objects.filter(response__user=guts.user, complete=False)
     if review.count():
         review = review[0]
         return ViewResponse('main:view-task', review.id)
     return ViewResponse('main:home')
+
 
 @login_required
 @get_or_post
@@ -136,7 +163,11 @@ def task_adhoc_review(get, guts):
         task = response.task
         result = task.result
         # Tagger or merger can both view, as well as super-user
-        if (response.user != guts.user) and not (guts.user.is_superuser) and (result.user != guts.user):
+        if (
+            (response.user != guts.user)
+            and not (guts.user.is_superuser)
+            and (result.user != guts.user)
+        ):
             return ForbiddenResponse("You are not authorized to see this review.")
         project_type = get_project_type(task.project)
         task = project_type.cast(task)
@@ -148,6 +179,7 @@ def task_adhoc_review(get, guts):
         return TemplateResponse(template, template_data)
     else:
         return ViewResponse('main:next-review')
+
 
 @login_required
 @get_or_post
@@ -177,6 +209,7 @@ def task_review(get, guts, review_id):
         review.save()
         return ViewResponse('main:next-review')
 
+
 @login_required
 @get_or_post
 def unmerge(get, guts, task_id):
@@ -197,6 +230,7 @@ def unmerge(get, guts, task_id):
     else:
         return ForbiddenResponse("Only superusers may perform this operation.")
 
+
 @login_required
 @get_or_post
 def wip_review(get, guts):
@@ -205,27 +239,35 @@ def wip_review(get, guts):
     elif Project.objects.filter(admin=guts.user).count():
         wips = WorkInProgress.objects.filter(task__project__admin=guts.user)
     else:
-        return ForbiddenResponse("Only project administrators and superusers may see this page.")
+        return ForbiddenResponse(
+            "Only project administrators and superusers may see this page."
+        )
     if get:
-        wip_list = [{"id": wip.id,
-                     "user": wip.user.username,
-                     "task_id": wip.task.id,
-                     "task_url": wip.task.get_absolute_url(),
-                     "project_id": wip.task.project.id,
-                     "project_name": wip.task.project.title,
-                     "project_url": wip.task.project.get_absolute_url(),
-                     "start_time": wip.start_time}
-                    for wip in wips.order_by("-start_time")]
+        wip_list = [
+            {
+                "id": wip.id,
+                "user": wip.user.username,
+                "task_id": wip.task.id,
+                "task_url": wip.task.get_absolute_url(),
+                "project_id": wip.task.project.id,
+                "project_name": wip.task.project.title,
+                "project_url": wip.task.project.get_absolute_url(),
+                "start_time": wip.start_time,
+            }
+            for wip in wips.order_by("-start_time")
+        ]
         template_data = {"wips": wip_list}
         template = get_template("wip-review.html")
         return TemplateResponse(template, template_data)
     else:
         try:
-            wips_to_delete = [wips.get(pk=pk) for pk
-                              in guts.parameters.getlist("wips_to_delete")]
+            wips_to_delete = [
+                wips.get(pk=pk) for pk in guts.parameters.getlist("wips_to_delete")
+            ]
             for wip in wips_to_delete:
                 wip.delete()
             return ViewResponse('main:wip-list')
         except WorkInProgress.DoesNotExist:
-            return ForbiddenResponse("You can only delete a project " \
-                                         "that you are an admin for.")
+            return ForbiddenResponse(
+                "You can only delete a project " "that you are an admin for."
+            )

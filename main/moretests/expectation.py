@@ -9,11 +9,13 @@ import sys
 from six.moves.urllib.parse import urlparse
 from main.wrapper import Encoder
 
+
 def abstract():
     """Function to work around (pre-2.6) Python's lack of abstract methods.
     (http://norvig.com/python-iaq.html)"""
     caller = inspect.getouterframes(inspect.currentframe())[1][3]
     raise NotImplementedError(caller + " must be implemented in subclass")
+
 
 class Conditions(object):
     """Contains the conditions that are tested before and after an
@@ -36,9 +38,11 @@ class Conditions(object):
         self.invariants = invariants
 
     def __add__(self, other):
-        return Conditions((tuple(self.preconditions) + tuple(other.preconditions)),
-                          (tuple(self.postconditions) + tuple(other.postconditions)),
-                          (tuple(self.invariants) + tuple(other.invariants)))
+        return Conditions(
+            (tuple(self.preconditions) + tuple(other.preconditions)),
+            (tuple(self.postconditions) + tuple(other.postconditions)),
+            (tuple(self.invariants) + tuple(other.invariants)),
+        )
 
     @classmethod
     def null(cls):
@@ -66,10 +70,20 @@ class Conditions(object):
         not actually impose any conditions.  This is useful when
         developing a test if you are not sure what \"good\" outputs
         should look like."""
+
         def dc(input_context, output_context):
-            print(">>> IN", json.dumps(input_context, cls=Encoder, indent=2), file=sys.stderr)
-            print("<<< OUT", json.dumps(output_context, cls=Encoder, indent=2), file=sys.stderr)
+            print(
+                ">>> IN",
+                json.dumps(input_context, cls=Encoder, indent=2),
+                file=sys.stderr,
+            )
+            print(
+                "<<< OUT",
+                json.dumps(output_context, cls=Encoder, indent=2),
+                file=sys.stderr,
+            )
             return True
+
         return cls((), (dc,), ())
 
     def check(self, test_case, input_context, callback):
@@ -77,22 +91,25 @@ class Conditions(object):
         inv_failure_msg = "Invariant %s failed (context %r, %r --> %r)"
         post_failure_msg = "Postcondition %s failed (contexts %r and %r)"
         for f in self.preconditions:
-            test_case.assertTrue(f(input_context),
-                                  pre_failure_msg % \
-                                     (f.__name__, input_context))
-        invariant_initial_values = \
-            [(f, f(input_context)) for f in self.invariants]
+            test_case.assertTrue(
+                f(input_context), pre_failure_msg % (f.__name__, input_context)
+            )
+        invariant_initial_values = [(f, f(input_context)) for f in self.invariants]
         output_context = callback(input_context)
         for (f, before) in invariant_initial_values:
             after = f(input_context)
-            test_case.assertEquals(before, after,
-                                   inv_failure_msg % \
-                                       (f.__name__, input_context, before, after))
+            test_case.assertEquals(
+                before,
+                after,
+                inv_failure_msg % (f.__name__, input_context, before, after),
+            )
         for f in self.postconditions:
-            test_case.assertTrue(f(input_context, output_context),
-                                 post_failure_msg % \
-                                     (f.__name__, input_context, output_context))
+            test_case.assertTrue(
+                f(input_context, output_context),
+                post_failure_msg % (f.__name__, input_context, output_context),
+            )
         return output_context
+
 
 class AbstractExpectation(object):
     """Superclass for all classes that implement the `check` method."""
@@ -114,8 +131,11 @@ class AbstractExpectation(object):
         arguments to a query form."""
         if input_context == None:
             input_context = {}
-        output_context = self.conditions.check(test_case, input_context, self.action(test_case))
+        output_context = self.conditions.check(
+            test_case, input_context, self.action(test_case)
+        )
         return output_context
+
 
 class WebTarget(object):
     """Represents various attributes of a Web page that will be
@@ -131,34 +151,42 @@ class WebTarget(object):
         HTTP-related metadata such as the status code, and return the
         JSON data to the caller."""
         ## make the pseudo-HTTP request and get the response
-        data = dict(input_context) # copy the dict
+        data = dict(input_context)  # copy the dict
         data["response_format"] = "json"
         if self.method == "GET":
-            response = test_case.client.get(self.path, data,
-                                            follow=(self.final_views is not None))
+            response = test_case.client.get(
+                self.path, data, follow=(self.final_views is not None)
+            )
         elif self.method == "POST":
-            response = test_case.client.post(self.path, data,
-                                             follow=(self.final_views is not None))
+            response = test_case.client.post(
+                self.path, data, follow=(self.final_views is not None)
+            )
         else:
             test_case.fail("Unhandled HTTP method %s" % self.method)
         ## check the status code
-        status_code_failure_message = \
-            "Status code %d not in {%s}; response content:\n%s" % \
-            (response.status_code,
-             ", ".join([str(s) for s in self.statuses]),
-             response.content)
+        status_code_failure_message = (
+            "Status code %d not in {%s}; response content:\n%s"
+            % (
+                response.status_code,
+                ", ".join([str(s) for s in self.statuses]),
+                response.content,
+            )
+        )
         if "Location" in response:
             status_code_failure_message += "\nLocation: %s" % response["Location"]
-        test_case.assert_(response.status_code in self.statuses,
-                          status_code_failure_message)
+        test_case.assert_(
+            response.status_code in self.statuses, status_code_failure_message
+        )
         ## if appropriate, check where we have been redirected to
         if self.final_views:
-            test_case.assert_(response.redirect_chain,
-                              "This page should have been a redirect")
+            test_case.assert_(
+                response.redirect_chain, "This page should have been a redirect"
+            )
             final_path, penultimate_status_code = response.redirect_chain[-1]
             final_view, final_args, final_kwargs = resolve(urlparse(final_path)[2])
-            test_case.assert_(final_view in self.final_views,
-                              "Redirect to %s unexpected" % final_path)
+            test_case.assert_(
+                final_view in self.final_views, "Redirect to %s unexpected" % final_path
+            )
         ## unmarshal the JSON in the response and return it to the caller
         if response.content:
             return json.loads(response.content)
@@ -167,8 +195,9 @@ class WebTarget(object):
         else:
             return {}
 
-    def __init__(self, method, view, args=None, kwargs=None,
-                 statuses=(200,), final_views=None):
+    def __init__(
+        self, method, view, args=None, kwargs=None, statuses=(200,), final_views=None
+    ):
         """The `method` argument is an HTTP method.  The `view` is a
         Django view function, the name of a view function, or a URL
         pattern name.  `args` and `kwargs` are arguments to the view
@@ -185,6 +214,7 @@ class WebTarget(object):
         self.statuses = statuses
         self.final_views = final_views
 
+
 class ViewExpectation(AbstractExpectation):
     """Expected behavior for one view method being invoked by the Web
     client that returns a certain page."""
@@ -197,26 +227,32 @@ class ViewExpectation(AbstractExpectation):
         super(ViewExpectation, self).__init__(conditions)
         self.target = target
 
+
 ###
 ### a test of the test framework
 ###
 
+
 def null_precondition(input_context):
     return True
+
 
 def null_postcondition(input_context, output_context):
     return True
 
+
 def null_invariant(input_context):
     return True
 
+
 from main.views.base import about
+
 
 class ExpectationSmokeTest(TestCase):
     def runTest(self):
-        null_conditions = Conditions((null_precondition,),
-                                     (null_postcondition,),
-                                     (null_invariant,))
+        null_conditions = Conditions(
+            (null_precondition,), (null_postcondition,), (null_invariant,)
+        )
         ## The "about" view, unlike most, does not require a logged-in user.
         target_about = WebTarget("GET", about)
         expectation = ViewExpectation(null_conditions, target_about)

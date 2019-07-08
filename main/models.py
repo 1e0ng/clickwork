@@ -13,23 +13,28 @@ import sys
 import six
 from functools import reduce
 
+
 def abstract():
     """Function to work around (pre-2.6) Python's lack of abstract methods.
     (http://norvig.com/python-iaq.html)"""
     caller = inspect.getouterframes(inspect.currentframe())[1][3]
     raise NotImplementedError(caller + " must be implemented in subclass")
 
+
 ## TODO: After we upgrade to using Django 1.2, appropriate methods
 ## should be added to these classes to enforce model validation.
 ## http://docs.djangoproject.com/en/dev/ref/models/instances/?from=olddocs#id1
+
 
 class Version(models.Model):
     version = models.IntegerField()
     updated = models.DateTimeField(auto_now=True)
 
+
 class ProjectTag(models.Model):
     """Tags describing projects (there is a many-to-many relationship
     between them)."""
+
     name = models.CharField(max_length=255, unique=True)
 
     class Meta:
@@ -38,6 +43,7 @@ class ProjectTag(models.Model):
     def __unicode__(self):
         return self.name
 
+
 class Project(models.Model):
     """The project is the core of the management for Clickwork; it is 
        where tasks are managed. Projects may wish to subclass this if 
@@ -45,53 +51,60 @@ class Project(models.Model):
        if they do, they should add a project_class attribute to
        their type.
        """
+
     class Meta:
-        ordering = ('title', )
+        ordering = ('title',)
+
     def __unicode__(self):
         return u"%s (#%s -- %s)" % (self.title, self.id, self.type)
 
     #: Project title, used in the project overview page.
     title = models.CharField(max_length=255)
-    
+
     #: Project description, used in the project overview page.
     description = models.TextField()
 
     #: Identifiers for attributes of a project; useful for filtering.
     tags = models.ManyToManyField(ProjectTag)
-    
-    #: A list of groups that can annotate/work on this project. 
-    annotators  = models.ManyToManyField(Group, related_name="annotator_for") # list of groups
-    
-    #: A list of groups that can merge this project.
-    #: IGNORED FOR AUTO-REVIEW PROJECTS. 
-    mergers     = models.ManyToManyField(Group, related_name="merger_for") # list of groups
 
-    #: The project type is one of the TASK_TYPES defined in the 
+    #: A list of groups that can annotate/work on this project.
+    annotators = models.ManyToManyField(
+        Group, related_name="annotator_for"
+    )  # list of groups
+
+    #: A list of groups that can merge this project.
+    #: IGNORED FOR AUTO-REVIEW PROJECTS.
+    mergers = models.ManyToManyField(Group, related_name="merger_for")  # list of groups
+
+    #: The project type is one of the TASK_TYPES defined in the
     #: settings; this describes what kind of project it is.
-    type        = models.CharField(max_length=100, choices=((x,x) for x in settings.TASK_TYPES))
-    
+    type = models.CharField(
+        max_length=100, choices=((x, x) for x in settings.TASK_TYPES)
+    )
+
     #: Currently, projects have a single administrator; the Admin should
     #: eventually have some sort of control over the project.
     #: TODO: Give admin some sort of control over the project.
-    admin       = models.ForeignKey(User)
-    
+    admin = models.ForeignKey(User)
+
     #: The number of annotators/workers that each Task should be given to.
     #: IGNORED FOR AUTO-REVIEW PROJECTS.
     annotator_count = models.IntegerField()
 
     #: Priority field controls priority of tasks in this project
     #: for users who have access to the project.
-    priority    = models.IntegerField(choices=(
-        (-1, "Disabled"),
-        (0, "Very Low"),
-        (1, "Low"),
-        (2, "Medium"),
-        (3, "High"),
-        (4, "Very High")
-    ))
+    priority = models.IntegerField(
+        choices=(
+            (-1, "Disabled"),
+            (0, "Very Low"),
+            (1, "Low"),
+            (2, "Medium"),
+            (3, "High"),
+            (4, "Very High"),
+        )
+    )
 
-
-    merging_strategy = None # merging still needs consideration
+    merging_strategy = None  # merging still needs consideration
 
     needs_fresh_eyes = models.BooleanField(default=True)
 
@@ -107,8 +120,7 @@ class Project(models.Model):
         for anno_group in self.annotators.all():
             for task in self.task_set.all():
                 for user in anno_group.user_set.all():
-                    r, created = AutoReview.objects.get_or_create(user=user,
-                                                                  task=task)
+                    r, created = AutoReview.objects.get_or_create(user=user, task=task)
                     if created:
                         r.full_clean()
                         r.save()
@@ -118,25 +130,29 @@ class Project(models.Model):
         return ("main:view-project", [str(self.id)])
 
     def as_dict(self):
-        return {"id": self.id,
-                "title": self.title,
-                "description": self.description,
-                "annotators": [six.text_type(g) for g in self.annotators.all()],
-                "mergers": [six.text_type(m) for m in self.mergers.all()],
-                "type": self.type,
-                "admin": six.text_type(self.admin),
-                "annotator_count": self.annotator_count,
-                "priority": self.priority,
-                "needs_fresh_eyes": self.needs_fresh_eyes,
-                "tags": [six.text_type(t) for t in self.tags.all()]}
+        return {
+            "id": self.id,
+            "title": self.title,
+            "description": self.description,
+            "annotators": [six.text_type(g) for g in self.annotators.all()],
+            "mergers": [six.text_type(m) for m in self.mergers.all()],
+            "type": self.type,
+            "admin": six.text_type(self.admin),
+            "annotator_count": self.annotator_count,
+            "priority": self.priority,
+            "needs_fresh_eyes": self.needs_fresh_eyes,
+            "tags": [six.text_type(t) for t in self.tags.all()],
+        }
 
     def export(self):
         """Returns a dict in which the keys are file names (which will
         be prefixed by \"project-\" in the export zipfile) and the
         values are file contents, either bytestrings or unicode
         objects."""
-        raise NotImplementedError("Subclasses must implement either " \
-                                      "Project.export() or Task.export()")
+        raise NotImplementedError(
+            "Subclasses must implement either " "Project.export() or Task.export()"
+        )
+
 
 ###
 ### Stuff to configure how projects and tags show up on the admin page.
@@ -144,17 +160,23 @@ class Project(models.Model):
 class ProjectTagInline(admin.TabularInline):
     model = Project.tags.through
     extra = 0
+
+
 #    formfield_overrides = { models.ManyToManyField: {"widget": forms.SelectMultiple} }
 
+
 class ProjectTagAdmin(admin.ModelAdmin):
-    inlines = [ProjectTagInline,]
+    inlines = [ProjectTagInline]
+
 
 class ProjectAdmin(admin.ModelAdmin):
-    inlines = [ProjectTagInline,]
+    inlines = [ProjectTagInline]
     exclude = ('tags',)
+
 
 class TaskManager(models.Manager):
     """Customized manager for Task objects."""
+
     def filtered_projected_and_sorted(self):
         """Return a QuerySet for the tasks that has disabled projects filtered out,
         has an extra wip_count attribute with the number of works in progress for
@@ -165,27 +187,42 @@ class TaskManager(models.Manager):
         ## Django.  I assume this is a Django bug.
         tasks = self.exclude(project__priority=-1)
         tasks = tasks.annotate(wip_count=models.Count("workinprogress"))
-        tasks = tasks.order_by("-project__priority", "project__id", "-completed_assignments", "?")
+        tasks = tasks.order_by(
+            "-project__priority", "project__id", "-completed_assignments", "?"
+        )
         return tasks
 
     def can_annotate(self, user):
         """Returns a QuerySet of tasks that the given user can annotate.
         TODO: This QuerySet does NOT filter out the tasks that the user
         HAS ALREADY annotated."""
-        excluded_users = list(reduce(lambda s1, s2: s1.union(s2),
-                                     [frozenset([User.objects.get(username=username) for username in exclusion])
-                                      for exclusion in settings.CLICKWORK_KEEP_APART
-                                      if user.username in exclusion],
-                                     frozenset()) - frozenset([user]))
+        excluded_users = list(
+            reduce(
+                lambda s1, s2: s1.union(s2),
+                [
+                    frozenset(
+                        [User.objects.get(username=username) for username in exclusion]
+                    )
+                    for exclusion in settings.CLICKWORK_KEEP_APART
+                    if user.username in exclusion
+                ],
+                frozenset(),
+            )
+            - frozenset([user])
+        )
         groups = user.groups.all()
         tasks = self.filtered_projected_and_sorted()
         tasks = tasks.exclude(response__user__in=excluded_users)
         tasks = tasks.exclude(workinprogress__user__in=excluded_users)
-        tasks = tasks.filter(project__annotators__in=groups, # for all tasks where user is an annotator
-                             completed = False)
+        tasks = tasks.filter(
+            project__annotators__in=groups,  # for all tasks where user is an annotator
+            completed=False,
+        )
         tasks = tasks.exclude(response__user=user)
-        tasks = tasks.filter(project__annotator_count__gt=
-                             models.F("wip_count")+models.F("completed_assignments"))
+        tasks = tasks.filter(
+            project__annotator_count__gt=models.F("wip_count")
+            + models.F("completed_assignments")
+        )
         return tasks
 
     def can_merge(self, user):
@@ -197,8 +234,9 @@ class TaskManager(models.Manager):
         ## If you take the models.Q() out of the statement below, the method fails:
         ## the query attribute of the QuerySet, which should be a SQL string, is None.
         ## I think this is a Django bug.
-        tasks = tasks.exclude(models.Q(project__needs_fresh_eyes=True,
-                                       pk__in=tasks_responded_to))
+        tasks = tasks.exclude(
+            models.Q(project__needs_fresh_eyes=True, pk__in=tasks_responded_to)
+        )
         tasks = tasks.filter(project__mergers__in=groups)
         tasks = tasks.filter(result__isnull=True, wip_count=0, completed=True)
         return tasks
@@ -215,6 +253,7 @@ class TaskManager(models.Manager):
             return annotateable[0]
         ## if we got here then there is nothing to annotate or merge
         return None
+
 
 class Task(models.Model):
     """Subclassed by any type that actually wants to store task-specific
@@ -236,7 +275,7 @@ class Task(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return("main:view-task", (), {"task_id": str(self.id)})
+        return ("main:view-task", (), {"task_id": str(self.id)})
 
     @property
     def merge_in_progress(self):
@@ -260,11 +299,13 @@ class Task(models.Model):
             raise ValidationError("Task is marked \"merged\" but not \"completed\".")
 
     def as_dict(self):
-        return {"id": self.id,
-                "project_name": self.project.title,
-                "project_id": self.project.id,
-                "merged": self.merged,
-                "completed": self.completed}
+        return {
+            "id": self.id,
+            "project_name": self.project.title,
+            "project_id": self.project.id,
+            "merged": self.merged,
+            "completed": self.completed,
+        }
 
     ## DEPRECATED API (see CW-40)
     @property
@@ -272,6 +313,7 @@ class Task(models.Model):
         """The name of the template to use when presenting this task
         to a user for annotation."""
         abstract()
+
     @property
     def merging_template(self):
         """The name of the template to use when presenting this task
@@ -282,10 +324,12 @@ class Task(models.Model):
         """A dict that will be translated into a template context when
         annotating this task."""
         abstract()
+
     def merging_template_input(self):
         """A dict that will be translated into a template context when
         merging this task."""
         abstract()
+
     def handle_unmerge(self):
         """Undo a merge, if this project has been merged."""
         self.result.delete()
@@ -340,8 +384,9 @@ class Task(models.Model):
         objects.  Otherwise, the filename in the export zipfile will
         simply be \"task-<TASKID>\" and the contents will be the
         return value of this method."""
-        raise NotImplementedError("Subclasses must implement either " \
-                                      "Project.export() or Task.export()")
+        raise NotImplementedError(
+            "Subclasses must implement either " "Project.export() or Task.export()"
+        )
 
     def viewable_by(self, user):
         """Indicates whether or not this task can be viewed by the given
@@ -354,24 +399,33 @@ class Task(models.Model):
             return True
         return False
 
+
 ##
 ## It appears that when a validator is run for a ForeignKey object,
 ## the argument passed to the validator is the primary key, not the
 ## model object itself.
 ##
 
+
 def is_auto_review(task_id):
     task = Task.objects.get(pk=task_id)
     if not task.project.auto_review:
-        raise ValidationError("Task %r is not associated with an auto-review project" % task)
+        raise ValidationError(
+            "Task %r is not associated with an auto-review project" % task
+        )
+
 
 def is_not_auto_review(task_id):
     task = Task.objects.get(pk=task_id)
     if task.project.auto_review:
-        raise ValidationError("Task %r is associated with an auto-review project" % task)
+        raise ValidationError(
+            "Task %r is associated with an auto-review project" % task
+        )
+
 
 class Response(models.Model):
     """Represents one user's work on one task.  Subclassed for specific tasks."""
+
     user = models.ForeignKey(User)
     task = models.ForeignKey(Task)
     end_time = models.DateTimeField(auto_now_add=True)
@@ -391,12 +445,17 @@ class Response(models.Model):
             raise ValidationError("Work on Response cannot end before it begins.")
 
     def __unicode__(self):
-        return u"response by %s to %s" % (six.text_type(self.user), six.text_type(self.task))
+        return u"response by %s to %s" % (
+            six.text_type(self.user),
+            six.text_type(self.task),
+        )
+
 
 class Result(models.Model):
     """Represents the merging of several users' work on one task.
     (The 'user' field indicates which user was responsible for the merging.)
     Subclassed for specific tasks."""
+
     user = models.ForeignKey(User)
     task = models.OneToOneField(Task, validators=[is_not_auto_review])
     end_time = models.DateTimeField(auto_now_add=True)
@@ -408,7 +467,10 @@ class Result(models.Model):
         return None
 
     def __unicode__(self):
-        return u"merge by %s of %s" % (six.text_type(self.user), six.text_type(self.task))
+        return u"merge by %s of %s" % (
+            six.text_type(self.user),
+            six.text_type(self.task),
+        )
 
     def clean(self):
         super(Result, self).clean()
@@ -417,13 +479,17 @@ class Result(models.Model):
         if not self.task.completed:
             raise ValidationError("A task cannot be merged before it is annotated.")
 
+
 class ExpectedResponse(models.Model):
     """For tasks associated with auto-review projects, represents the
     'right answer' that the annotator is supposed to provide."""
+
     task = models.OneToOneField(Task, validators=[is_auto_review])
+
 
 class AutoReview(models.Model):
     """Keeps track of which users have seen, or are seeing, which auto-review projects."""
+
     task = models.ForeignKey(Task, validators=[is_auto_review])
     user = models.ForeignKey(User)
     ## If null, means that the user has not yet been shown this task for review.
@@ -440,10 +506,13 @@ class AutoReview(models.Model):
         s1 = frozenset(self.user.groups.all())
         s2 = frozenset(self.task.project.annotators.all())
         if s1.isdisjoint(s2):
-            raise ValidationError("User %r does not have permission to annotate %r" % \
-                                      (self.user, self.task.project))
+            raise ValidationError(
+                "User %r does not have permission to annotate %r"
+                % (self.user, self.task.project)
+            )
         if self.end_time is not None and self.start_time is None:
             raise ValidationError("End time set but start time is null")
+
 
 class Review(models.Model):
     """When a user demonstrates a lack of understanding of the tagging
@@ -452,9 +521,10 @@ class Review(models.Model):
        response and the merger's final selection and comment. Reviews
        are created in the task_view/submit handler, and presented to
        the user as additional 'things to complete' by the UI.
-    """   
+    """
+
     response = models.ForeignKey(Response)
-    comment = models.TextField(blank=True,null=True)
+    comment = models.TextField(blank=True, null=True)
     creation_time = models.DateTimeField(auto_now_add=True)
     complete = models.BooleanField(default=False)
 
@@ -462,27 +532,34 @@ class Review(models.Model):
     def review_template(self):
         """The name of the template to use when presenting this review to the user."""
         abstract()
+
     def review_template_input(self):
         """A dict that will be translated into a template context when
         reviewing this task."""
         abstract()
 
+
 class WorkInProgress(models.Model):
     """WorkInProgress tracks the user's current task; used to direct the
     user back to the same task if they lose their browser window,
     etc."""
+
     task = models.ForeignKey(Task, validators=[is_not_auto_review])
     user = models.ForeignKey(User)
 
     def __unicode__(self):
-        return u"wip for %s working on %s" % (six.text_type(self.user), six.text_type(self.task))
-    
-    #: We store the start_time here, based on when the WIP is 
+        return u"wip for %s working on %s" % (
+            six.text_type(self.user),
+            six.text_type(self.task),
+        )
+
+    #: We store the start_time here, based on when the WIP is
     #: created, so we can stash it on the Response later.
     start_time = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         unique_together = ("task", "user")
+
 
 class ProjectUpload(models.Model):
     """Track an upload to a project. Uploads are passed to the project
@@ -495,12 +572,16 @@ class ProjectUpload(models.Model):
     upload = models.FileField(upload_to="uploads/")
     project = models.ForeignKey(Project)
     timestamp = models.DateTimeField(auto_now=True)
-    complete = models.BooleanField(default=False,editable=False)
+    complete = models.BooleanField(default=False, editable=False)
     error = models.TextField(blank=True)
 
     def __unicode__(self):
-        return u"upload %d to %s at %s" % (self.id, six.text_type(self.project),
-                                           six.text_type(self.timestamp))
+        return u"upload %d to %s at %s" % (
+            self.id,
+            six.text_type(self.project),
+            six.text_type(self.timestamp),
+        )
+
 
 class ProjectType(object):
     """Represents a type of project; hence subclasses of this class
@@ -515,27 +596,40 @@ class ProjectType(object):
         type, then the original model object will be returned."""
         abstract()
 
+
 class PageTrack(models.Model):
     """Records when users arrive and depart from pages in the application."""
+
     user = models.ForeignKey(User, help_text="The user who saw the page.")
-    view_name = models.CharField(max_length=100,
-                                 help_text="The name of the Django view function associated with the page.")
-    view_args = models.CharField(max_length=200,
-                                 help_text="The positional arguments passed to the function.")
-    view_kwargs = models.CharField(max_length=200,
-                                   help_text="The keyword arguments passed to the function.")
-    focus_time = models.DateTimeField(help_text="The time the user got focus on the page.")
-    blur_time = models.DateTimeField(default=lambda: timezone.now(),
-                                     help_text="The time the user lost focus to the page.")
+    view_name = models.CharField(
+        max_length=100,
+        help_text="The name of the Django view function associated with the page.",
+    )
+    view_args = models.CharField(
+        max_length=200, help_text="The positional arguments passed to the function."
+    )
+    view_kwargs = models.CharField(
+        max_length=200, help_text="The keyword arguments passed to the function."
+    )
+    focus_time = models.DateTimeField(
+        help_text="The time the user got focus on the page."
+    )
+    blur_time = models.DateTimeField(
+        default=lambda: timezone.now(),
+        help_text="The time the user lost focus to the page.",
+    )
+
 
 class Announcement(models.Model):
     """This model is designed to contain site announcements."""
+
     text = models.TextField()
     enabled = models.BooleanField(default=True)
     date = models.DateTimeField(auto_now=True)
 
+
 # We load types here, because they load the configured subtypes,
-# so that we can have the registered models in subclasses be 
+# so that we can have the registered models in subclasses be
 # available as models.
 from . import types
 
@@ -553,6 +647,7 @@ from django.contrib.auth.signals import user_logged_in, user_logged_out
 
 logger = logging.getLogger(__name__)
 
+
 def log_transition(message, **kwargs):
     if kwargs.get("user") is not None:
         username = kwargs["user"].username
@@ -564,9 +659,11 @@ def log_transition(message, **kwargs):
         client_ip = "[NOT_HTTP]"
     logger.info(message, extra={"user": username, "client_ip": client_ip})
 
+
 @receiver(user_logged_in)
 def on_login(sender, **kwargs):
     log_transition("logged in", **kwargs)
+
 
 @receiver(user_logged_out)
 def on_logout(sender, **kwargs):
