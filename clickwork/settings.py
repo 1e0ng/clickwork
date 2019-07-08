@@ -16,8 +16,8 @@ ALLOWED_HOSTS = ['0.0.0.0']
 SITE_ID = 1
 
 INSTALLED_APPS = (
-    'main',
-    'user_management',
+    'main.apps.MainConfig',
+    'user_management.apps.UserManagementConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

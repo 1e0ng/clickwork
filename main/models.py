@@ -615,8 +615,7 @@ class PageTrack(models.Model):
         help_text="The time the user got focus on the page."
     )
     blur_time = models.DateTimeField(
-        default=lambda: timezone.now(),
-        help_text="The time the user lost focus to the page.",
+        default=timezone.now, help_text="The time the user lost focus to the page."
     )
 
 
