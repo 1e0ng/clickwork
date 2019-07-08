@@ -1,18 +1,17 @@
 from __future__ import absolute_import
 from django.shortcuts import get_object_or_404
-from main.models import Project, Task, WorkInProgress, Response, Result, User, Review, AutoReview
+from main.models import Project, Task, WorkInProgress, Response, User, Review, AutoReview
 from main.types import type_list
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from main.helpers import get_project_type
-from main.wrapper import get, get_or_post, TemplateResponse, ViewResponse, ForbiddenResponse, DefaultResponse, ErrorResponse
-from django.template import Context, Template
+from main.wrapper import get, get_or_post, TemplateResponse, ViewResponse, ForbiddenResponse
 from django.template.loader import get_template
 from django.utils.datastructures import MultiValueDictKeyError
-import datetime
 import sys
 import traceback
 import six
+
 
 @login_required
 @get_or_post

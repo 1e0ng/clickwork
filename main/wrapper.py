@@ -137,18 +137,18 @@ class Encoder(json.JSONEncoder):
 
 class ResponseSeed(object):
     """The parts of an HttpResponse that we trust views to create."""
-    def sprout(self, context, format):
+    def sprout(self, context, request, format):
         if format == "html":
-            return self.sprout_html(context)
+            return self.sprout_html(context, request)
         elif format == "json":
-            return self.sprout_json(context)
+            return self.sprout_json(context, request)
         else:
             raise self.FormatNotSupported(format)
 
-    def sprout_html(self, context):
+    def sprout_html(self, context, request):
         raise NotImplementedError("ResponseSeed is an abstract class")
 
-    def sprout_json(self, context):
+    def sprout_json(self, context, request):
         raise NotImplementedError("ResponseSeed is an abstract class")
 
     class FormatNotSupported(WrapperException):
@@ -163,13 +163,13 @@ class ErrorResponse(ResponseSeed):
         self.heading = heading
         self.message = message
 
-    def sprout_html(self, context):
+    def sprout_html(self, context, request):
         error_template = get_template("error.html")
         context.update({"error_heading": self.heading, "error_message": self.message})
-        body = error_template.render(context)
+        body = error_template.render(context, request)
         return HttpResponseServerError(body, content_type=HTML)
 
-    def sprout_json(self, context):
+    def sprout_json(self, context, request):
         body = json.dumps({"error_heading": self.heading, "error_message": self.message},
                           indent=2)
         return HttpResponseServerError(body, content_type=JSON)
@@ -180,13 +180,13 @@ class NotFoundResponse(ResponseSeed):
         """The message may contain markup."""
         self.message = message
 
-    def sprout_html(self, context):
+    def sprout_html(self, context, request):
         not_found_template = get_template("not-found.html")
         context.update({"not_found_message": self.message})
-        body = not_found_template.render(context)
+        body = not_found_template.render(context, request)
         return HttpResponseNotFound(body, content_type=HTML)
 
-    def sprout_json(self, context):
+    def sprout_json(self, context, request):
         body = json.dumps({"not_found_message": self.message})
         return HttpResponseNotFound(body, content_type=JSON)
 
@@ -197,13 +197,13 @@ class ForbiddenResponse(ResponseSeed):
         """The message may contain markup."""
         self.message = message
 
-    def sprout_html(self, context):
+    def sprout_html(self, context, request):
         forbidden_template = get_template("forbidden.html")
         context.update({"forbidden_message": self.message})
-        body = forbidden_template.render(context)
+        body = forbidden_template.render(context, request)
         return HttpResponseForbidden(body, content_type=HTML)
 
-    def sprout_json(self, context):
+    def sprout_json(self, context, request):
         body = json.dumps({"forbidden_message": self.message})
         return HttpResponseForbidden(body, content_type=JSON)
 
@@ -214,14 +214,14 @@ class DefaultResponse(ResponseSeed):
         self.data = data
         self.status = status
 
-    def sprout_html(self, context):
+    def sprout_html(self, context, request):
         default_template = get_template("json.html")
         dump = json.dumps(self.data, cls=Encoder, indent=2)
         context.update({"json": dump})
-        body = default_template.render(context)
+        body = default_template.render(context, request)
         return HttpResponse(body, content_type=HTML)
 
-    def sprout_json(self, context):
+    def sprout_json(self, context, request):
         body = json.dumps(self.data, cls=Encoder, indent=2)
         return HttpResponse(body, status=self.status, content_type=JSON)
 
@@ -232,12 +232,12 @@ class AttachmentResponse(DefaultResponse):
         self.content_type = content_type
         self.contents = contents
 
-    def sprout_html(self, context):
+    def sprout_html(self, context, request):
         response = HttpResponse(self.contents, content_type=self.content_type)
         response["Content-Disposition"] = "attachment; filename=%s" % self.name
         return response
 
-    def sprout_json(self, context):
+    def sprout_json(self, context, request):
         body = json.dumps({"name": self.name,
                            "content_type": self.content_type,
                            "contents_in_base64": b64encode(self.contents)},
@@ -254,9 +254,9 @@ class TemplateResponse(DefaultResponse):
         self.template = template
         self.status = status
 
-    def sprout_html(self, context):
+    def sprout_html(self, context, request):
         context.update(self.data)
-        body = self.template.render(context)
+        body = self.template.render(context, request)
         return HttpResponse(body, status=self.status, content_type=HTML)
 
 class ModelResponse(DefaultResponse):
@@ -266,12 +266,12 @@ class ModelResponse(DefaultResponse):
     def __init__(self, model):
         self.model = model
 
-    def sprout_html(self, context):
+    def sprout_html(self, context, request):
         if hasattr(self.model, "get_absolute_url"):
             return HttpResponseRedirect(self.model.get_absolute_url())
         else:
             other_seed = DefaultResponse(self.model)
-            return other_seed.sprout(context, "html")
+            return other_seed.sprout(context, request, "html")
 
 class ViewResponse(ResponseSeed):
     """Returns the page associated with a given view;
@@ -282,17 +282,17 @@ class ViewResponse(ResponseSeed):
         self.kwargs = kwargs
         self.url = reverse(view, args=args, kwargs=kwargs)
 
-    def sprout(self, context, format):
+    def sprout(self, context, request, format):
         return HttpResponseRedirect(append_format(self.url, format))
 
 class RefererResponse(ResponseSeed):
     """Use this for cases where a page redirects to its referer.
     This is a common idiom when executing a POST, for example."""
-    def sprout(self, context, format):
+    def sprout(self, context, request, format):
         if "referer" not in context:
             message = "This page should redirect back to its referring page, but the HTTP_REFERER metadata cannot be found."
             other_seed = ErrorResponse("No referer", message)
-            other_seed.sprout(context, format)
+            other_seed.sprout(context, request, format)
         else:
             return HttpResponseRedirect(append_format(context["referer"], format))
 
@@ -350,8 +350,8 @@ def dispatch_on_method(f, d):
                 guts.log_error(log_message)
                 raise
             format = guts.parameters.get("response_format", "html")
-            context = RequestContext(request, {"referer": request.META.get("HTTP_REFERER", None)})
-            response = seed.sprout(context, format)
+            context = {"referer": request.META.get("HTTP_REFERER", None)}
+            response = seed.sprout(context, request, format)
             if response.status_code >= 400:
                 log_message = "%s to %s yields code %d" % (request.method, request.path, response.status_code)
                 if hasattr(seed, "message"):

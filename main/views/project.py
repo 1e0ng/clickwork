@@ -1,16 +1,11 @@
 from __future__ import absolute_import
 from __future__ import print_function
-from django.shortcuts import get_object_or_404, render_to_response
-from django.template.loader import get_template
-from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
 from main.models import Project, ProjectUpload, Task, Response
 from django.contrib.auth.decorators import login_required
 from django.forms import ModelForm
-from main.helpers import get_project_type
 from io import StringIO
 import zipfile
-from django.conf import settings
-from main.views.overview import one_project
 from main.wrapper import get, get_or_post, RequestGuts, TemplateResponse, \
     DefaultResponse, AttachmentResponse, ForbiddenResponse, ErrorResponse, ViewResponse
 from main.helpers import get_project_type, http_basic_auth
