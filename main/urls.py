@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from django.conf import settings
 from django.conf.urls import *
-from django.contrib.auth.views import login, logout
+import django.contrib.auth.views as auth_views
 
 from main.views import project, task, base, timesheets, overview, user
 from main import wrapper
@@ -69,6 +69,14 @@ urlpatterns += [
 ]
 
 urlpatterns += [
-    url(r'^accounts/logout/$', logout, name='logout'),
-    url(r'^accounts/login/$', login, name='login'),
+    url(
+        r'^accounts/logout/$',
+        auth_views.LogoutView.as_view(template_name='registration/logged_out.html'),
+        name='logout',
+    ),
+    url(
+        r'^accounts/login/$',
+        auth_views.LoginView.as_view(template_name='registration/login.html'),
+        name='login',
+    ),
 ]
