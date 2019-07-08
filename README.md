@@ -11,7 +11,7 @@ Pull requests are welcome.
 ## Getting started
 
 ```
-pip install -r requirement
+pip install -r requirements
 python manage.py migrate
 python manage.py runserver 0.0.0.0:8080
 ```
