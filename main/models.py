@@ -40,7 +40,7 @@ class ProjectTag(models.Model):
     class Meta:
         ordering = ("name",)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
 
@@ -55,7 +55,7 @@ class Project(models.Model):
     class Meta:
         ordering = ('title',)
 
-    def __unicode__(self):
+    def __str__(self):
         return u"%s (#%s -- %s)" % (self.title, self.id, self.type)
 
     #: Project title, used in the project overview page.
@@ -266,7 +266,7 @@ class Task(models.Model):
 
     objects = TaskManager()
 
-    def __unicode__(self):
+    def __str__(self):
         return u"task %d of %s" % (self.id, six.text_type(self.project))
 
     def summary(self):
@@ -443,7 +443,7 @@ class Response(models.Model):
         if self.start_time > (self.end_time or timezone.now()):
             raise ValidationError("Work on Response cannot end before it begins.")
 
-    def __unicode__(self):
+    def __str__(self):
         return u"response by %s to %s" % (
             six.text_type(self.user),
             six.text_type(self.task),
@@ -465,7 +465,7 @@ class Result(models.Model):
         exact semantics may vary by subclass."""
         return None
 
-    def __unicode__(self):
+    def __str__(self):
         return u"merge by %s of %s" % (
             six.text_type(self.user),
             six.text_type(self.task),
@@ -546,7 +546,7 @@ class WorkInProgress(models.Model):
     task = models.ForeignKey(Task, models.CASCADE, validators=[is_not_auto_review])
     user = models.ForeignKey(User, models.CASCADE)
 
-    def __unicode__(self):
+    def __str__(self):
         return u"wip for %s working on %s" % (
             six.text_type(self.user),
             six.text_type(self.task),
@@ -574,7 +574,7 @@ class ProjectUpload(models.Model):
     complete = models.BooleanField(default=False, editable=False)
     error = models.TextField(blank=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return u"upload %d to %s at %s" % (
             self.id,
             six.text_type(self.project),
