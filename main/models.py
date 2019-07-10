@@ -364,7 +364,7 @@ class Task(models.Model):
         except NotImplementedError:
             result = {}
         ## TODO: consistently use either IDs or model objects here
-        result["project_id"] = self.project.id
+        result["project"] = self.project
         result["task"] = self
         result["wip_owners"] = [wip.user for wip in self.workinprogress_set.all()]
         if self.completed:

@@ -91,7 +91,7 @@ def task_view(get, guts, task_id):
         ## can submit a response or result to a task without getting a WIP first
         if not (task.viewable_by(guts.user) and get):
             return ForbiddenResponse(
-                u"You are not allowed to view %s" % six.text_type(task)
+                "You are not allowed to view %s." % six.text_type(task)
             )
     if get:
         return TemplateResponse(task.template(), task.template_data())

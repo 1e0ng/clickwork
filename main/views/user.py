@@ -64,7 +64,7 @@ def recent_responses(guts, username):
     user = get_object_or_404(User, username=username)
     if guts.user.is_superuser or guts.user == user:
         recent_responses = Response.objects.filter(
-            user=User.objects.get(username=username), task__result__id__isnull=False
+            user=user, task__result__id__isnull=False
         ).order_by("-task__result__end_time")[skip : skip + 50]
         responses = []
         for response in recent_responses:

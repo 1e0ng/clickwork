@@ -34,6 +34,19 @@ vertical-align: top;
     font-size:12px;
 }
 
+
+.tag-option {
+    display:flex;
+    width:300px;
+    font-size: 18px;
+    display:inline-block;
+    min-height:50px;
+}
+.tag-option.highlight {
+    color:red;
+    font-weight: bold;
+}
+
 #browserWarning {
     background: #6d87a1;
     color: #fff;

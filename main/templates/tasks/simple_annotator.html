@@ -7,7 +7,15 @@
 <h1>{{question}}</h1>
 
 <form action="" method="POST">{% csrf_token %}
-  <p><input type="text" name="answer" /></p>
+  <p>
+    {% if project.tags.count == 0 %}
+    <input type="text" name="answer" />
+    {% else %}
+      {% for tag in project.tags.all %}
+        <label class="tag-option"><input type="radio" value="{{tag.id}}" name="answer">{{tag.name}}</label>
+      {% endfor %}
+    {% endif %}
+  </p>
   <p>
     Comments (not required):
     <textarea cols="80" rows="5" name="comment"></textarea>

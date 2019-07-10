@@ -124,8 +124,15 @@ def visitable(user):
     visitable_pages.append(
         {
             "category": "Overviews",
-            "url": "/user/%s/responses/" % guts.user.username,
-            "description": "Recently Merged Responses",
+            "url": reverse('main:user-response-list', args=[guts.user.username]),
+            "description": "Recently Responses",
+        }
+    )
+    visitable_pages.append(
+        {
+            "category": "Overviews",
+            "url": reverse('main:user-result-list', args=[guts.user.username]),
+            "description": "Recently Results",
         }
     )
     return visitable_pages

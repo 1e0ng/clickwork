@@ -13,7 +13,7 @@ class SimpleProject(Project):
     def handle_input(self, input):
         """Given ProjectUpload object, create tasks based on it."""
         for line in input.upload:
-            line = line.rstrip()
+            line = line.decode('utf-8').strip()
             task = SimpleTask(question=line, project=self)
             task.full_clean()
             task.save()
@@ -52,9 +52,27 @@ class SimpleTask(Task):
            to be passed to the merging template."""
         data = self.tagging_template_input()
         data["responses"] = [
-            {"answer": r.simpleresponse.answer, "comment": r.simpleresponse.comment}
+            {
+                "answer": r.simpleresponse.answer
+                if self.project.tags.count() == 0
+                else self.project.tags.get(pk=int(r.simpleresponse.answer)),
+                "comment": r.simpleresponse.comment,
+            }
             for r in self.response_set.all()
         ]
+
+        if hasattr(self, 'result'):
+            data["result"] = self.result.simpleresult.answer
+        if self.project.tags.count() != 0:
+            data["answers"] = {
+                int(r.simpleresponse.answer): self.project.tags.get(
+                    pk=int(r.simpleresponse.answer)
+                )
+                for r in self.response_set.all()
+            }
+            if "result" in data:
+                data["result"] = int(data["result"])
+
         return data
 
     def handle_response(self, guts, **kwargs):
@@ -123,6 +141,12 @@ class SimpleResponse(Response):
     answer = models.CharField(max_length=255)
     comment = models.TextField(blank=True, null=True)
 
+    def summary(self):
+        project = self.task.project
+        if project.tags.count() == 0:
+            return self.answer
+        return project.tags.get(pk=int(self.answer))
+
 
 class SimpleResult(Result):
     """Merged result for simple responses; answer + comment"""
@@ -132,6 +156,12 @@ class SimpleResult(Result):
 
     answer = models.CharField(max_length=255)
     comment = models.TextField(blank=True, null=True)
+
+    def summary(self):
+        project = self.task.project
+        if project.tags.count() == 0:
+            return self.answer
+        return project.tags.get(pk=int(self.answer))
 
 
 class Simple(ProjectType):
@@ -151,9 +181,13 @@ class Simple(ProjectType):
 
     def cast(self, model):
         if isinstance(model, Task):
-            return model.simpletask
+            return SimpleTask.objects.get(pk=model.id)
         elif isinstance(model, Project):
             return SimpleProject.objects.get(pk=model.id)
+        elif isinstance(model, Response):
+            return SimpleResponse.objects.get(pk=model.id)
+        elif isinstance(model, Result):
+            return SimpleResult.objects.get(pk=model.id)
         else:
             return model
 

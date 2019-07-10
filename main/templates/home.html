@@ -3,7 +3,7 @@
 {% block title %}Home{% endblock %}
 {% block heading %}Welcome to Clickwork <small>With Django {{django_version}}</small>{% endblock %}
 {% block content %}
-{% if recent_responses %}
+{% if recent_responses or recent_results %}
 <div id="recent_tasks">
   {% if recent_results %}
   <h3>Recently Merged</h3>

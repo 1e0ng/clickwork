@@ -16,7 +16,17 @@
 <h2>Your answer:</h2>
 
 <form action="" method="POST">{% csrf_token %}
-  <p><input type="text" name="answer" /></p>
+  <p>
+    {% if project.tags.count == 0 %}
+    <input type="text" name="answer" />
+    {% else %}
+      {% for tag in project.tags.all %}
+        <label class="tag-option {% if tag.id in answers %}highlight{% endif %}">
+          <input type="radio" value="{{tag.id}}" name="answer" {% if result == tag.id %}checked{% endif %}>{{tag.name}}
+        </label>
+      {% endfor %}
+    {% endif %}
+  </p>
   <p>
     Comments (not required):
     <textarea cols="80" rows="5" name="comment"></textarea>
